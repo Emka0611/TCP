@@ -21,6 +21,7 @@ public class GUIClient implements Runnable
 	public static JFrame mainFrame = null;
 	
 	public static JPanel statusBar = null;
+	//Emka
 	public static JLabel statusField = null;
 	public static JTextField statusColor = null;
 	
