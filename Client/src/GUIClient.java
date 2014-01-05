@@ -21,7 +21,6 @@ public class GUIClient implements Runnable
 	public static JFrame mainFrame = null;
 	
 	public static JPanel statusBar = null;
-	//Emka
 	public static JLabel statusField = null;
 	public static JTextField statusColor = null;
 	
@@ -121,12 +120,12 @@ public class GUIClient implements Runnable
 			}
 		};
 
-		connectButton = new JButton("Po³¹cz");
+		connectButton = new JButton("Poï¿½ï¿½cz");
 		connectButton.setActionCommand("connect");
 		connectButton.addActionListener(buttonListener);
 		connectButton.setEnabled(true);
 		
-		disconnectButton = new JButton("Roz³¹cz");
+		disconnectButton = new JButton("Rozï¿½ï¿½cz");
 		disconnectButton.setMnemonic(KeyEvent.VK_D);
 		disconnectButton.setActionCommand("disconnect");
 		disconnectButton.addActionListener(buttonListener);
@@ -212,12 +211,12 @@ public class GUIClient implements Runnable
 			}
 		};
 
-		sendButton = new JButton("Wyœlij");
+		sendButton = new JButton("Wyï¿½lij");
 		sendButton.setActionCommand("send");
 		sendButton.addActionListener(buttonListener);
 		sendButton.setEnabled(false);
 		
-		clearButton = new JButton("Wyczyœæ");
+		clearButton = new JButton("Wyczyï¿½ï¿½");
 		clearButton.setActionCommand("clear");
 		clearButton.addActionListener(buttonListener);
 		clearButton.setEnabled(false);
@@ -233,16 +232,16 @@ public class GUIClient implements Runnable
 		framePane.add(new JLabel("Numer sekwencyjny:"));
 		framePane.add(seqNumberField);
 		
-		framePane.add(new JLabel("Liczba pakietów:"));
+		framePane.add(new JLabel("Liczba pakietï¿½w:"));
 		framePane.add(packetsNumerField);
 
-		framePane.add(new JLabel("Flaga bezpieczeñstwa:"));
+		framePane.add(new JLabel("Flaga bezpieczeï¿½stwa:"));
 		framePane.add(sequrityFlagField);
 		
-		framePane.add(new JLabel("Szerokoœæ okna danych: "));
+		framePane.add(new JLabel("Szerokoï¿½ï¿½ okna danych: "));
 		framePane.add(dataWindowWidthField);
 		
-		framePane.add(new JLabel("D³ugoœæ danych:"));
+		framePane.add(new JLabel("Dï¿½ugoï¿½ï¿½ danych:"));
 		framePane.add(dataLengthField);
 		
 		framePane.add(new JLabel("Dane:"));
