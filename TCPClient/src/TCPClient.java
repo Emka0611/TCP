@@ -1,7 +1,5 @@
 import java.io.*;
-
 import javax.swing.*;
-
 import java.net.*;
 
 public class TCPClient
@@ -77,11 +75,6 @@ public class TCPClient
 		}
 	}
 
-	// ********************************************************************
-
-	// Checks the current state and sets the enables/disables
-	// accordingly
-
 	private static void handleBeginConnect()
 	{
 		try
@@ -101,10 +94,8 @@ public class TCPClient
 		}
 	}
 
-	private static void handleConnected()
+	public static void handleConnectedForWriting()
 	{
-		//System.out.println("handleConnected::");
-		String s = null;
 		try
 		{
 			// Send data
@@ -112,24 +103,32 @@ public class TCPClient
 			{
 				out.writeObject(Connection.toSend);
 				out.flush();
-				// Connection.toSend.setLength(0);
 				Connection.toSend = "";
 				changeStatusTS(EConnectionStatus.NULL, true);
 			}
-
+		}
+		catch (IOException e)
+		{
+			cleanUp();
+			changeStatusTS(EConnectionStatus.DISCONNECTED, false);
+		}
+	}
+	
+	public static void handleConnectedForReading()
+	{
+		String s = null;
+		try
+		{
 			// Receive data
-			if (in.available() > 0)
+			try
 			{
-				try
-				{
-					s = (String) in.readObject();
-				}
-				catch (ClassNotFoundException e)
-				{
-
-				}
+				s = (String) in.readObject();
 			}
+			catch (ClassNotFoundException e)
+			{
 
+			}
+			
 			if ((s != null) && (s.length() != 0))
 			{
 				// Check if it is the end of a transmission
@@ -148,7 +147,6 @@ public class TCPClient
 		catch (IOException e)
 		{
 			cleanUp();
-			changeStatusTS(EConnectionStatus.DISCONNECTED, false);
 		}
 	}
 
@@ -176,8 +174,12 @@ public class TCPClient
 		Connection.isHost = false;
 		Connection.name = "Simple TCP Client";
 		
+		WatekNasluchujacy w1 = new WatekNasluchujacy();
+		
 		GUIClient.initGUI();
-
+		
+		(new Thread(w1)).start();
+		
 		while (true)
 		{
 			try	{ Thread.sleep(10); }
@@ -190,7 +192,7 @@ public class TCPClient
 				break;
 
 			case CONNECTED:
-				handleConnected();
+				handleConnectedForWriting();
 				break;
 
 			case DISCONNECTING:

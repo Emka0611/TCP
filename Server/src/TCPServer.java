@@ -1,7 +1,5 @@
 import java.io.*;
-
 import javax.swing.*;
-
 import java.net.*;
 
 public class TCPServer
@@ -11,6 +9,8 @@ public class TCPServer
 	public static Socket socket = null;
 	public static ObjectInputStream in = null;
 	public static ObjectOutputStream out = null;
+	
+	public static String msg = null;
 
 	// The thread-safe way to change the GUI components while
 	// changing state
@@ -91,12 +91,7 @@ public class TCPServer
 		}
 	}
 
-	// ********************************************************************
-
-	// Checks the current state and sets the enables/disables
-	// accordingly
-
-	private static void handleBeginConnect()
+	public static void handleBeginConnect()
 	{
 		try
 		{
@@ -116,9 +111,8 @@ public class TCPServer
 		}
 	}
 
-	private static void handleConnected()
+	public static void handleConnectedForWriting()
 	{
-		String s = null;
 		try
 		{
 			// Send data
@@ -126,22 +120,30 @@ public class TCPServer
 			{
 				out.writeObject(Connection.toSend);
 				out.flush();
-				//Connection.toSend.setLength(0);
 				Connection.toSend = "";
 				changeStatusTS(EConnectionStatus.NULL, true);
 			}
-
+		}
+		catch (IOException e)
+		{
+			cleanUp();
+			changeStatusTS(EConnectionStatus.DISCONNECTED, false);
+		}
+	}
+	
+	public static void handleConnectedForReading()
+	{
+		String s = null;
+		try
+		{
 			// Receive data
-			if (in.available() > 0)
+			try
 			{
-				try
-				{
-					s = (String) in.readObject();
-				}
-				catch (ClassNotFoundException e)
-				{
+				s = (String) in.readObject();
+			}
+			catch (ClassNotFoundException e)
+			{
 
-				}
 			}
 			
 			if ((s != null) && (s.length() != 0))
@@ -163,38 +165,34 @@ public class TCPServer
 		catch (IOException e)
 		{
 			cleanUp();
-			changeStatusTS(EConnectionStatus.DISCONNECTED, false);
 		}
 	}
 
-	private static void handleDisconnecting()
+	public static void handleDisconnecting()
 	{
 		try
 		{
-			System.out.println("END_CHAT_SESSION sending...!");
 			// Tell other chatter to disconnect as well
 			out.writeObject(Connection.END_CHAT_SESSION);
 			out.flush();
-			System.out.println("END_CHAT_SESSION sent!");
 		}
 		catch (IOException e)
 		{
-			changeStatusTS(EConnectionStatus.DISCONNECTED, false);
 		}
 			
 		cleanUp();
 		changeStatusTS(EConnectionStatus.DISCONNECTED, true);
 	}
 
-	// ********************************************************************
-
 	// The main procedure
 	public static void main(String args[])
 	{
 		Connection.isHost = true;
 		Connection.name = "Simple TCP Server";
+		WatekNasluchujacy w1 = new WatekNasluchujacy();
 		
 		GUIServer.initGUI();
+		(new Thread(w1)).start();
 
 		while (true)
 		{
@@ -208,7 +206,7 @@ public class TCPServer
 				break;
 
 			case CONNECTED:
-				handleConnected();
+				handleConnectedForWriting();
 				break;
 
 			case DISCONNECTING:
