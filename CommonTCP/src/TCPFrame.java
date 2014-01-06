@@ -64,5 +64,13 @@ public class TCPFrame
 	public void setCheckSum(byte checkSum)
 	{
 		this.checkSum = checkSum;
+	}
+	
+	@Override
+	public String toString() 
+	{
+		String s = "" + seqNumber;		
+		return s;
 	}	
+	
 }

@@ -8,7 +8,6 @@ public class TCPClient
 	public final static String END_CHAT_SESSION = new Character((char) 0).toString();
 
 	// TCP Components
-	public static ServerSocket hostServer = null;
 	public static Socket socket = null;
 	public static BufferedReader in = null;
 	public static PrintWriter out = null;
@@ -39,19 +38,6 @@ public class TCPClient
 	// Cleanup for disconnect
 	private static void cleanUp()
 	{
-		try
-		{
-			if (hostServer != null)
-			{
-				hostServer.close();
-				hostServer = null;
-			}
-		}
-		catch (IOException e)
-		{
-			hostServer = null;
-		}
-
 		try
 		{
 			if (socket != null)

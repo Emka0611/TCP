@@ -16,4 +16,5 @@ public class Connection
 	public static String statusString = statusMessages[connectionStatus.ordinal()];
 	public static StringBuffer toAppend = new StringBuffer("");
 	public static StringBuffer toSend = new StringBuffer("");
+	public final static int FIELDS_NUMBER = 7; 
 }
