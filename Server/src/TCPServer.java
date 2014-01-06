@@ -1,5 +1,7 @@
 import java.io.*;
+
 import javax.swing.*;
+
 import java.net.*;
 
 public class TCPServer
@@ -12,8 +14,7 @@ public class TCPServer
 	
 	public static String msg = null;
 
-	// The thread-safe way to change the GUI components while
-	// changing state
+	// The thread-safe way to change the GUI components while changing state
 	private static void changeStatusTS(EConnectionStatus newConnectStatus, boolean noError)
 	{
 		if (newConnectStatus != EConnectionStatus.NULL)
@@ -30,27 +31,12 @@ public class TCPServer
 			Connection.statusString = Connection.statusMessages[EConnectionStatus.NULL.ordinal()];
 		}
 
-		// Call the run() routine (Runnable interface) on the
-		// error-handling and GUI-update thread
+		// Call the run() routine (Runnable interface) on the error-handling and GUI-update thread
 		SwingUtilities.invokeLater(GUIServer.getTcpobj());
 	}
 
-	// Cleanup for disconnect
 	private static void cleanUp()
 	{
-		try
-		{
-			if (hostServer != null)
-			{
-				hostServer.close();
-				hostServer = null;
-			}
-		}
-		catch (IOException e)
-		{
-			hostServer = null;
-		}
-
 		try
 		{
 			if (socket != null)
@@ -77,18 +63,19 @@ public class TCPServer
 			in = null;
 		}
 
-		if (out != null)
+		try
 		{
-			try
+			if (out != null)
 			{
 				out.close();
 				out = null;
 			}
-			catch (IOException e)
-			{
-
-			}
 		}
+		catch (IOException e)
+		{
+
+		}
+
 	}
 
 	public static void handleBeginConnect()

@@ -9,8 +9,7 @@ public class TCPClient
 	public static ObjectInputStream in = null;
 	public static ObjectOutputStream out = null;
 	
-	// The thread-safe way to change the GUI components while
-	// changing state
+	// The thread-safe way to change the GUI components while changing state
 	private static void changeStatusTS(EConnectionStatus newConnectStatus, boolean noError)
 	{
 		if (newConnectStatus != EConnectionStatus.NULL)
@@ -27,12 +26,10 @@ public class TCPClient
 			Connection.statusString = Connection.statusMessages[EConnectionStatus.NULL.ordinal()];
 		}
 
-		// Call the run() routine (Runnable interface) on the
-		// error-handling and GUI-update thread
+		// Call the run() routine (Runnable interface) on the error-handling and GUI-update thread
 		SwingUtilities.invokeLater(GUIClient.getTcpobj());
 	}
 
-	// Cleanup for disconnect
 	private static void cleanUp()
 	{
 		try
@@ -61,18 +58,19 @@ public class TCPClient
 			in = null;
 		}
 
-		if (out != null)
+		try
 		{
-			try
+			if (out != null)
 			{
 				out.close();
 				out = null;
 			}
-			catch (IOException e)
-			{
-
-			}
 		}
+		catch (IOException e)
+		{
+
+		}
+
 	}
 
 	private static void handleBeginConnect()
