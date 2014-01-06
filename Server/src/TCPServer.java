@@ -6,14 +6,11 @@ import java.net.*;
 
 public class TCPServer
 {
-	// Indicates the end of a session
-	public final static String END_CHAT_SESSION = new Character((char) 0).toString();
-
 	// TCP Components
 	public static ServerSocket hostServer = null;
 	public static Socket socket = null;
-	public static BufferedReader in = null;
-	public static PrintWriter out = null;
+	public static ObjectInputStream in = null;
+	public static ObjectOutputStream out = null;
 
 	// The thread-safe way to change the GUI components while
 	// changing state
@@ -82,8 +79,15 @@ public class TCPServer
 
 		if (out != null)
 		{
-			out.close();
-			out = null;
+			try
+			{
+				out.close();
+				out = null;
+			}
+			catch (IOException e)
+			{
+
+			}
 		}
 	}
 
@@ -99,8 +103,9 @@ public class TCPServer
 			hostServer = new ServerSocket(Connection.port);
 			socket = hostServer.accept();
 
-			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			out = new PrintWriter(socket.getOutputStream(), true);
+			out = new ObjectOutputStream(socket.getOutputStream());
+			in = new ObjectInputStream(socket.getInputStream());
+
 			changeStatusTS(EConnectionStatus.CONNECTED, true);
 		}
 		// If error, clean up and output an error message
@@ -113,36 +118,45 @@ public class TCPServer
 
 	private static void handleConnected()
 	{
-		String s;
+		String s = null;
 		try
 		{
 			// Send data
 			if (Connection.toSend.length() != 0)
 			{
-				out.print(Connection.toSend);
+				out.writeObject(Connection.toSend);
 				out.flush();
-				Connection.toSend.setLength(0);
+				//Connection.toSend.setLength(0);
+				Connection.toSend = "";
 				changeStatusTS(EConnectionStatus.NULL, true);
 			}
 
 			// Receive data
-			if (in.ready())
+			if (in.available() > 0)
 			{
-				s = in.readLine();
-				if ((s != null) && (s.length() != 0))
+				try
 				{
-					// Check if it is the end of a transmission
-					if (s.equals(END_CHAT_SESSION))
-					{
-						changeStatusTS(EConnectionStatus.DISCONNECTING, true);
-					}
+					s = (String) in.readObject();
+				}
+				catch (ClassNotFoundException e)
+				{
 
-					// Otherwise, receive what text
-					else
-					{
-						GUIServer.appendToChatBox("INCOMING: " + s + "\n");
-						changeStatusTS(EConnectionStatus.NULL, true);
-					}
+				}
+			}
+			
+			if ((s != null) && (s.length() != 0))
+			{
+				// Check if it is the end of a transmission
+				if (s.equals(Connection.END_CHAT_SESSION))
+				{
+					changeStatusTS(EConnectionStatus.DISCONNECTING, true);
+				}
+
+				// Otherwise, receive what text
+				else
+				{
+					GUIServer.appendToChatBox("INCOMING: " + s + "\n");
+					changeStatusTS(EConnectionStatus.NULL, true);
 				}
 			}
 		}
@@ -155,11 +169,19 @@ public class TCPServer
 
 	private static void handleDisconnecting()
 	{
-		// Tell other chatter to disconnect as well
-		out.print(END_CHAT_SESSION);
-		out.flush();
-
-		// Clean up (close all streams/sockets)
+		try
+		{
+			System.out.println("END_CHAT_SESSION sending...!");
+			// Tell other chatter to disconnect as well
+			out.writeObject(Connection.END_CHAT_SESSION);
+			out.flush();
+			System.out.println("END_CHAT_SESSION sent!");
+		}
+		catch (IOException e)
+		{
+			changeStatusTS(EConnectionStatus.DISCONNECTED, false);
+		}
+			
 		cleanUp();
 		changeStatusTS(EConnectionStatus.DISCONNECTED, true);
 	}

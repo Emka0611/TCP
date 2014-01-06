@@ -1,6 +1,8 @@
 
 public class Connection
 {
+	public final static String END_CHAT_SESSION = "END";
+	
 	public final static String statusMessages[] = { 
 		" B³¹d! Nie mo¿na po³¹czyæ!",
 		" Roz³¹czony",
@@ -15,6 +17,7 @@ public class Connection
 	public static String name = "Simple TCP Client";
 	public static String statusString = statusMessages[connectionStatus.ordinal()];
 	public static StringBuffer toAppend = new StringBuffer("");
-	public static StringBuffer toSend = new StringBuffer("");
+	//public static StringBuffer toSend = new StringBuffer("");
+	public static String toSend = "";
 	public final static int FIELDS_NUMBER = 7; 
 }

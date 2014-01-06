@@ -314,7 +314,8 @@ public class GUIServer implements Runnable
 	{
 		synchronized (Connection.toSend)
 		{
-			Connection.toSend.append(s + "\n");
+			//Connection.toSend.append(s);
+			Connection.toSend = s;
 		}
 	}
 }

@@ -226,14 +226,6 @@ public class GUIClient implements Runnable
 	{
 		TCPFrame frame = new TCPFrame();
 		frame.setSeqNumber((byte)126);
-		//byte tmp;
-		//tmp = 
-/*		String s = "";
-		
-		for(int i=0; i<Connection.FIELDS_NUMBER; i++)
-		{
-			s+=frameFields.get(i).getText();
-		}*/
 		
 		return frame;
 	}
@@ -313,20 +305,14 @@ public class GUIClient implements Runnable
 		
 		tcpObj.run();
 	}
-
-	/*	public static void appendToChatBox(String s)
-	{
-		synchronized (Connection.toAppend)
-		{
-			Connection.toAppend.append(s);
-		}
-	}*/
 	
 	private static void sendString(String s)
 	{
 		synchronized (Connection.toSend)
 		{
-			Connection.toSend.append(s + "\n");
+			Connection.toSend = s;
+			//Connection.toSend.append(s);
+			//System.out.println(Connection.toSend);
 		}
 	}
 
@@ -402,14 +388,6 @@ public class GUIClient implements Runnable
 
 		mainFrame.repaint();
 	}
-
-/*	public static void appendToChatBox(String s)
-	{
-		synchronized (Connection.toAppend)
-		{
-			Connection.toAppend.append(s);
-		}
-	}*/
 }
 
 class ActionAdapter implements ActionListener

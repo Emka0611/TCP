@@ -1,17 +1,16 @@
 import java.io.*;
+
 import javax.swing.*;
+
 import java.net.*;
 
 public class TCPClient
 {
-	// Indicates the end of a session
-	public final static String END_CHAT_SESSION = new Character((char) 0).toString();
-
 	// TCP Components
 	public static Socket socket = null;
-	public static BufferedReader in = null;
-	public static PrintWriter out = null;
-
+	public static ObjectInputStream in = null;
+	public static ObjectOutputStream out = null;
+	
 	// The thread-safe way to change the GUI components while
 	// changing state
 	private static void changeStatusTS(EConnectionStatus newConnectStatus, boolean noError)
@@ -66,8 +65,15 @@ public class TCPClient
 
 		if (out != null)
 		{
-			out.close();
-			out = null;
+			try
+			{
+				out.close();
+				out = null;
+			}
+			catch (IOException e)
+			{
+
+			}
 		}
 	}
 
@@ -82,8 +88,9 @@ public class TCPClient
 		{
 			socket = new Socket(Connection.hostIP, Connection.port);
 
-			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			out = new PrintWriter(socket.getOutputStream(), true);
+			in = new ObjectInputStream(socket.getInputStream());
+			out = new ObjectOutputStream(socket.getOutputStream());
+			
 			changeStatusTS(EConnectionStatus.CONNECTED, true);
 		}
 		// If error, clean up and output an error message
@@ -96,35 +103,45 @@ public class TCPClient
 
 	private static void handleConnected()
 	{
-		String s;
+		//System.out.println("handleConnected::");
+		String s = null;
 		try
 		{
 			// Send data
 			if (Connection.toSend.length() != 0)
 			{
-				out.print(Connection.toSend);
+				out.writeObject(Connection.toSend);
 				out.flush();
-				Connection.toSend.setLength(0);
+				// Connection.toSend.setLength(0);
+				Connection.toSend = "";
 				changeStatusTS(EConnectionStatus.NULL, true);
 			}
 
 			// Receive data
-			if (in.ready())
+			if (in.available() > 0)
 			{
-				s = in.readLine();
-				if ((s != null) && (s.length() != 0))
+				try
 				{
-					// Check if it is the end of a transmission
-					if (s.equals(END_CHAT_SESSION))
-					{
-						changeStatusTS(EConnectionStatus.DISCONNECTING, true);
-					}
+					s = (String) in.readObject();
+				}
+				catch (ClassNotFoundException e)
+				{
 
-					// Otherwise, receive what text
-					else
-					{
-						changeStatusTS(EConnectionStatus.NULL, true);
-					}
+				}
+			}
+
+			if ((s != null) && (s.length() != 0))
+			{
+				// Check if it is the end of a transmission
+				if (s.equals(Connection.END_CHAT_SESSION))
+				{
+					changeStatusTS(EConnectionStatus.DISCONNECTING, true);
+				}
+
+				// Otherwise, receive what text
+				else
+				{
+					changeStatusTS(EConnectionStatus.NULL, true);
 				}
 			}
 		}
@@ -137,11 +154,16 @@ public class TCPClient
 
 	private static void handleDisconnecting()
 	{
-		// Tell other chatter to disconnect as well
-		out.print(END_CHAT_SESSION);
-		out.flush();
-
-		// Clean up (close all streams/sockets)
+		try
+		{
+			// Tell other chatter to disconnect as well
+			out.writeObject(Connection.END_CHAT_SESSION);
+			out.flush();
+		}
+		catch (IOException e)
+		{
+		}
+			
 		cleanUp();
 		changeStatusTS(EConnectionStatus.DISCONNECTED, true);
 	}
