@@ -224,7 +224,7 @@ public class GUIServer implements Runnable
 		mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		mainFrame.setContentPane(mainPane);
 		mainFrame.setSize(mainFrame.getPreferredSize());
-		mainFrame.setLocation(200, 200);
+		mainFrame.setLocation(100, 130);
 		mainFrame.pack();
 		mainFrame.setVisible(true);
 		

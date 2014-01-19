@@ -190,8 +190,7 @@ public class TCPServer
 		{
 			cleanUp();
 			changeStatusTS(EConnectionStatus.DISCONNECTED, false);
-		}
-			
+		}		
 	}
 
 	// The main procedure

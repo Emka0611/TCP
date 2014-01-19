@@ -10,7 +10,7 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.Vector;
+//import java.util.Vector;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -22,6 +22,7 @@ public class GUIClient implements Runnable
 {	
 	public final static GUIClient tcpObj = new GUIClient();
 
+	public  static JTextField messageField = null;
 	public static JFrame mainFrame = null;
 	
 	public static JPanel statusBar = null;
@@ -32,89 +33,83 @@ public class GUIClient implements Runnable
 	public static JTextField portField = null;
 	public static JLabel windowWidthLabel = null;
 	public static JTextField windowWidth = null;
-	
+
+	public static JButton generateButton = null;
 	public static JButton connectButton = null;
 	public static JButton disconnectButton = null;
 	public static JButton sendButton = null;
 	public static JButton clearButton = null;
 	
-	public static Vector<JTextField> frameFields = null; 
-
+	public static FramePane framePane = new FramePane();
+	
+	public static final int OPT_SIZE_X = 300;
+	public static final int OPT_SIZE_Y = 100;
+	
+	public static final int MSG_SIZE_X = 900;
+	public static final int MSG_SIZE_Y = 100;
+	
+	public static final int PANE_SIZE_X = 900;
+	public static final int PANE_SIZE_Y = 40;
+	
 	public static GUIClient getTcpobj()
 	{
 		return tcpObj;
 	}
 	
-	private static JPanel initButtons()
-	{
-		ActionAdapter buttonListener = null;
-	
-		JPanel buttonPane = new JPanel(new GridLayout(1, 4));
-		buttonListener = new ActionAdapter()
-		{
-			public void actionPerformed(ActionEvent e)
-			{
-				if (e.getActionCommand().equals("send"))
-				{
-					TCPFrame frame = getFrame();
-					if (!getFrame().getData().equals(""))
-					{
-						sendFrame(frame);
-						frameFieldsClear();
-					}
-				}
-				else
-				{
-					frameFieldsClear();
-				}
-			}
-		};
-	
-		sendButton = new JButton("Wyslij");
-		sendButton.setActionCommand("send");
-		sendButton.addActionListener(buttonListener);
-		sendButton.setEnabled(false);
-		
-		clearButton = new JButton("Wyczysc");
-		clearButton.setActionCommand("clear");
-		clearButton.addActionListener(buttonListener);
-		clearButton.setEnabled(false);
-		
-		buttonListener = null;
-
-		buttonListener = new ActionAdapter()
-		{
-			public void actionPerformed(ActionEvent e)
-			{
-				if (e.getActionCommand().equals("connect"))
-				{
-					changeStatusNTS(EConnectionStatus.BEGIN_CONNECT, true);
-				}
-				else
-				{
-					changeStatusNTS(EConnectionStatus.DISCONNECTING, true);
-				}
-			}
-		};
-
-		connectButton = new JButton("Polacz");
-		connectButton.setActionCommand("connect");
-		connectButton.addActionListener(buttonListener);
-		connectButton.setEnabled(true);
-		
-		disconnectButton = new JButton("Rozlacz");
-		disconnectButton.setActionCommand("disconnect");
-		disconnectButton.addActionListener(buttonListener);
-		disconnectButton.setEnabled(false);
-		
-		buttonPane.add(sendButton);
-		buttonPane.add(clearButton);
-		buttonPane.add(connectButton);
-		buttonPane.add(disconnectButton);
-		
-		return buttonPane;		
+	private static void generateFrames()
+	{	
+		//TODO
 	}
-
+	
+	private static JPanel initMessagePane()
+	{
+		JPanel messagePane = new JPanel(new GridLayout(3,1));
+		
+		messageField = new JTextField(10);
+		messageField.setEnabled(false);
+		messageField.addFocusListener(new FocusAdapter()
+		{
+			public void focusLost(FocusEvent e)
+			{
+				messageField.selectAll();
+				
+				// Should be editable only when disconnected
+				if (Connection.connectionStatus != EConnectionStatus.DISCONNECTED)
+				{
+					changeStatusNTS(EConnectionStatus.NULL, true);
+				}
+				else
+				{
+					TCPClient.message = messageField.getText();
+				}
+			}
+		});
+		
+		ActionAdapter buttonListener = new ActionAdapter()
+		{
+			public void actionPerformed(ActionEvent e)
+			{
+				if (e.getActionCommand().equals("generate"))
+				{
+					generateFrames();
+				}
+			}
+		};
+	
+		generateButton = new JButton("Oblicz ramki");
+		generateButton.setActionCommand("generate");
+		generateButton.addActionListener(buttonListener);
+		generateButton.setEnabled(false);
+		
+		
+		messagePane.add(new JLabel("Wpisz wiadomosc:"));
+		messagePane.add(messageField);
+		messagePane.add(generateButton);
+		messagePane.setPreferredSize(new Dimension(MSG_SIZE_X,MSG_SIZE_Y));
+		
+		return messagePane;
+	}
+	
 	private static void initIpField(JPanel optionsPane)
 	{
 		ipField = new JTextField(10);
@@ -169,12 +164,11 @@ public class GUIClient implements Runnable
 				}
 			}
 		});
-	}	
-	
+	}
 
 	private static JPanel initOptionsPane()
 	{
-		JPanel optionsPane = new JPanel(new GridLayout(Connection.FIELDS_NUMBER, 2));
+		JPanel optionsPane = new JPanel(new GridLayout(3, 2));
 		
 		initIpField(optionsPane);
 		initPortField(optionsPane);
@@ -193,91 +187,121 @@ public class GUIClient implements Runnable
 		optionsPane.add(windowWidthLabel);
 		optionsPane.add(windowWidth);
 		
-		for(int i=0; i<(Connection.FIELDS_NUMBER - 3)*2 ; i++)
-		{
-			optionsPane.add(new JLabel());
-		}
-		
-		optionsPane.setPreferredSize(new Dimension(400,300));
+		optionsPane.setPreferredSize(new Dimension(OPT_SIZE_X,OPT_SIZE_Y));
 		return optionsPane;
 	}
 	
-	private static void initFields()
-	{		
-		frameFields = new Vector<JTextField>();
-		
-		for(int i=0; i<Connection.FIELDS_NUMBER; i++)
+	private static JPanel initButtons()
+	{
+		ActionAdapter buttonListener = null;
+	
+		JPanel buttonPane = new JPanel(new GridLayout(1, 4));
+		buttonListener = new ActionAdapter()
 		{
-			frameFields.add(new JTextField());
-		}
-		
-		framePanelSetEnabled(false);
-	}
+			public void actionPerformed(ActionEvent e)
+			{
+				if (e.getActionCommand().equals("send"))
+				{
+					TCPFrame frame = framePane.getFrame();
+					if (!framePane.getFrame().getData().equals(""))
+					{
+						sendFrame(frame);
+						framePane.clear();
+					}
+				}
+				else
+				{
+					framePane.clear();
+				}
+			}
+		};
 	
-	private static void framePanelSetEnabled(boolean enabled)
-	{
-		for(int i=0; i<Connection.FIELDS_NUMBER; i++)
+		sendButton = new JButton("Wyslij wszytkie");
+		sendButton.setActionCommand("send");
+		sendButton.addActionListener(buttonListener);
+		sendButton.setEnabled(false);
+		
+		clearButton = new JButton("Wyczysc");
+		clearButton.setActionCommand("clear");
+		clearButton.addActionListener(buttonListener);
+		clearButton.setEnabled(false);
+		
+		buttonListener = null;
+
+		buttonListener = new ActionAdapter()
 		{
-			frameFields.get(i).setEnabled(enabled);
-		}
+			public void actionPerformed(ActionEvent e)
+			{
+				if (e.getActionCommand().equals("connect"))
+				{
+					changeStatusNTS(EConnectionStatus.BEGIN_CONNECT, true);
+				}
+				else
+				{
+					changeStatusNTS(EConnectionStatus.DISCONNECTING, true);
+				}
+			}
+		};
+
+		connectButton = new JButton("Polacz");
+		connectButton.setActionCommand("connect");
+		connectButton.addActionListener(buttonListener);
+		connectButton.setEnabled(true);
 		
-		sendButton.setEnabled(enabled);
-		clearButton.setEnabled(enabled);
-	}
-	
-	private static void frameFieldsClear()
-	{
-		for(int i=0; i<Connection.FIELDS_NUMBER; i++)
-		{
-			frameFields.get(i).setText("");
-		}
-	}
-	
-	private static TCPFrame getFrame() 
-	{
-		Byte seqNumber = Byte.valueOf(frameFields.get(EFieldIndex.SEQ_NUMBER.ordinal()).getText());
-		Byte packetsNumber = Byte.valueOf(frameFields.get(EFieldIndex.PACKET_NUMBER.ordinal()).getText());
-		Byte sequrityFlag = Byte.valueOf(frameFields.get(EFieldIndex.SEQUIRITY_FLAG.ordinal()).getText());
-		Byte dataLength = Byte.valueOf(frameFields.get(EFieldIndex.DATA_LENGTH.ordinal()).getText());
-		String data = frameFields.get(EFieldIndex.DATA.ordinal()).getText();
-		Byte checkSum = Byte.valueOf(frameFields.get(EFieldIndex.CHECK_SUM.ordinal()).getText());
+		disconnectButton = new JButton("Rozlacz");
+		disconnectButton.setActionCommand("disconnect");
+		disconnectButton.addActionListener(buttonListener);
+		disconnectButton.setEnabled(false);
 		
-		TCPFrame frame = new TCPFrame(seqNumber, packetsNumber, sequrityFlag, dataLength, data, checkSum);
-		return frame;
-	}
-	
-	private static void addComponents (JPanel framePane)
-	{
-		initFields();
+		buttonPane.add(sendButton);
+		buttonPane.add(clearButton);
+		buttonPane.add(connectButton);
+		buttonPane.add(disconnectButton);
 		
-		framePane.add(new JLabel("Numer sekwencyjny:"));
+		return buttonPane;		
+	}
+
+
+
+
+	
+
+	
+/*	private static void addComponentsToFramePane (JPanel framePane)
+	{
+		
 		framePane.add(frameFields.get(EFieldIndex.SEQ_NUMBER.ordinal()));
 		
-		framePane.add(new JLabel("Liczba pakietow:"));
 		framePane.add(frameFields.get(EFieldIndex.PACKET_NUMBER.ordinal()));
 
-		framePane.add(new JLabel("Flaga bezpieczenstwa:"));
 		framePane.add(frameFields.get(EFieldIndex.SEQUIRITY_FLAG.ordinal()));
 		
-		framePane.add(new JLabel("Dlugosc danych:"));
 		framePane.add(frameFields.get(EFieldIndex.DATA_LENGTH.ordinal()));
 		
-		framePane.add(new JLabel("Dane:"));
 		framePane.add(frameFields.get(EFieldIndex.DATA.ordinal()));
 		
-		framePane.add(new JLabel("Suma kontrolna:"));
 		framePane.add(frameFields.get(EFieldIndex.CHECK_SUM.ordinal()));
 		
-	}
+	} */
 	
-	private static JPanel initFramePane()
+	private static JPanel initFramePaneLabel()
 	{
-		JPanel framePane = new JPanel(new GridLayout(Connection.FIELDS_NUMBER, 2));
-		framePane.setPreferredSize(new Dimension(400,300));
-		addComponents(framePane);
+		JPanel framePane = new JPanel(new GridLayout(1, Connection.FIELDS_NUMBER));
+		framePane.setPreferredSize(new Dimension(PANE_SIZE_X, PANE_SIZE_Y));
+		addComponentsToFramePaneLabel(framePane);
 		
 		return framePane;
 	}
+	
+	private static void addComponentsToFramePaneLabel (JPanel framePane)
+	{
+		framePane.add(new JLabel("Numer sekwencyjny:", JLabel.CENTER));
+		framePane.add(new JLabel("Liczba pakietow:", JLabel.CENTER));
+		framePane.add(new JLabel("Flaga bezpieczenstwa:", JLabel.CENTER));	
+		framePane.add(new JLabel("Dlugosc danych:", JLabel.CENTER));	
+		framePane.add(new JLabel("Dane:", JLabel.CENTER));	
+		framePane.add(new JLabel("Suma kontrolna:", JLabel.CENTER));
+	} 
 	
 	private static void initStatusColor()
 	{
@@ -326,41 +350,53 @@ public class GUIClient implements Runnable
 
 	public static void initGUI()
 	{
+		JPanel messagePane = initMessagePane();
 		initStatusBar();
 		GridBagConstraints c = new GridBagConstraints();
 		
 		JPanel buttonPane = initButtons();
 		JPanel optionsPane = initOptionsPane();
-		JPanel framePane = initFramePane();
+		JPanel framePaneLabel = initFramePaneLabel();
 
 		JPanel mainPane = new JPanel(new GridBagLayout());
 		
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 0;
 		c.gridy = 0;
-		mainPane.add(framePane, c);
+		mainPane.add(messagePane, c);
 		
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
 		c.gridy = 0;
 		mainPane.add(optionsPane, c);
 		
-		
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 0;
 		c.gridy = 2;
+		mainPane.add(framePaneLabel, c);
+		
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 0;
+		c.gridy = 3;
+		mainPane.add(framePane.getPane(), c);
+		
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 0;
+		c.gridy = 5;
 		mainPane.add(statusBar, c);
 
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridwidth = 2;
 		c.gridx = 0;
-		c.gridy = 1;
+		c.gridy = 4;
 		c.ipady = 30; 
 		mainPane.add(buttonPane, c);
 		
+
+		
 		mainFrame = new JFrame(Connection.name);
 		mainFrame.setContentPane(mainPane);
-		mainFrame.setLocation(700, 200);
+		mainFrame.setLocation(100, 400);
 		mainFrame.pack();
 		mainFrame.setVisible(true);
 		
@@ -373,7 +409,6 @@ public class GUIClient implements Runnable
 			}
 		});
 	}
-	
 
 	public void run()
 	{
@@ -382,40 +417,56 @@ public class GUIClient implements Runnable
 		case DISCONNECTED:
 			connectButton.setEnabled(true);
 			disconnectButton.setEnabled(false);
+			clearButton.setEnabled(false);
+			sendButton.setEnabled(false);
+			generateButton.setEnabled(false);
 			ipField.setEnabled(true);
 			portField.setEnabled(true);
 			statusColor.setBackground(Color.red);
-			framePanelSetEnabled(false);
+			framePane.setEnabled(false);
+			messageField.setEnabled(false);
 			break;
 
 		case DISCONNECTING:
 			connectButton.setEnabled(false);
 			disconnectButton.setEnabled(false);
+			clearButton.setEnabled(false);
+			sendButton.setEnabled(false);
+			generateButton.setEnabled(false);
 			ipField.setEnabled(false);
 			portField.setEnabled(false);
 			statusColor.setBackground(Color.orange);
-			framePanelSetEnabled(false);
+			framePane.setEnabled(false);
+			messageField.setEnabled(false);
 			break;
 
 		case CONNECTED:
 			connectButton.setEnabled(false);
 			disconnectButton.setEnabled(true);
+			sendButton.setEnabled(true);
+			clearButton.setEnabled(true);
+			generateButton.setEnabled(true);
 			ipField.setEnabled(false);
 			portField.setEnabled(false);
 			statusColor.setBackground(Color.green);
-			framePanelSetEnabled(true);
+			framePane.setEnabled(true);
 			windowWidth.setText(Byte.toString(TCPClient.windowWidth));
 			windowWidth.setVisible(true);
 			windowWidthLabel.setVisible(true);
+			messageField.setEnabled(true);
 			break;
 
 		case BEGIN_CONNECT:
 			connectButton.setEnabled(false);
 			disconnectButton.setEnabled(false);
+			sendButton.setEnabled(false);
+			clearButton.setEnabled(false);
+			generateButton.setEnabled(false);
 			ipField.setEnabled(false);
 			portField.setEnabled(false);
 			statusColor.setBackground(Color.orange);
-			framePanelSetEnabled(false);
+			framePane.setEnabled(false);
+			messageField.setEnabled(false);
 			break;
 
 		default:
@@ -425,6 +476,7 @@ public class GUIClient implements Runnable
 		ipField.setText(Connection.hostIP);
 		portField.setText((new Integer(Connection.port)).toString());
 		statusField.setText(Connection.statusString);
+		windowWidth.setText(new Byte (TCPClient.windowWidth).toString());
 		Connection.toAppend.setLength(0);
 
 		mainFrame.repaint();
