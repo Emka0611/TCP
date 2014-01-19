@@ -82,9 +82,8 @@ public class TCPServer
 	{
 		try
 		{
-			hostServer = new ServerSocket(Connection.port);
 			socket = hostServer.accept();
-
+			
 			out = new ObjectOutputStream(socket.getOutputStream());
 			in = new ObjectInputStream(socket.getInputStream());
 
@@ -174,6 +173,15 @@ public class TCPServer
 	// The main procedure
 	public static void main(String args[])
 	{
+		try
+		{
+			hostServer = new ServerSocket(Connection.port);
+		}
+		catch (IOException e)
+		{
+			changeStatusTS(EConnectionStatus.DISCONNECTED, false);
+		}
+		
 		Connection.isHost = true;
 		Connection.name = "Simple TCP Server";
 		WatekNasluchujacy w1 = new WatekNasluchujacy();

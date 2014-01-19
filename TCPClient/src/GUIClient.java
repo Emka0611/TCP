@@ -311,8 +311,6 @@ public class GUIClient implements Runnable
 		synchronized (Connection.toSend)
 		{
 			Connection.toSend = s;
-			//Connection.toSend.append(s);
-			//System.out.println(Connection.toSend);
 		}
 	}
 
