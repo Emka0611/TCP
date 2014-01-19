@@ -18,5 +18,5 @@ public class Connection
 	public static String statusString = statusMessages[connectionStatus.ordinal()];
 	public static StringBuffer toAppend = new StringBuffer("");
 	public static TCPFrame toSend = new TCPFrame("");
-	public final static int FIELDS_NUMBER = 7; 
+	public final static int FIELDS_NUMBER = EFieldIndex.values().length; 
 }

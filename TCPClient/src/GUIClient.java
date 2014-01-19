@@ -1,6 +1,8 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -40,12 +42,12 @@ public class GUIClient implements Runnable
 	{
 		return tcpObj;
 	}
-
-	private static void initSendClearButton()
+	
+	private static JPanel initButtons()
 	{
 		ActionAdapter buttonListener = null;
 	
-		JPanel buttonPane = new JPanel(new GridLayout(1, 2));
+		JPanel buttonPane = new JPanel(new GridLayout(1, 4));
 		buttonListener = new ActionAdapter()
 		{
 			public void actionPerformed(ActionEvent e)
@@ -76,8 +78,39 @@ public class GUIClient implements Runnable
 		clearButton.addActionListener(buttonListener);
 		clearButton.setEnabled(false);
 		
+		buttonListener = null;
+
+		buttonListener = new ActionAdapter()
+		{
+			public void actionPerformed(ActionEvent e)
+			{
+				if (e.getActionCommand().equals("connect"))
+				{
+					changeStatusNTS(EConnectionStatus.BEGIN_CONNECT, true);
+				}
+				else
+				{
+					changeStatusNTS(EConnectionStatus.DISCONNECTING, true);
+				}
+			}
+		};
+
+		connectButton = new JButton("Polacz");
+		connectButton.setActionCommand("connect");
+		connectButton.addActionListener(buttonListener);
+		connectButton.setEnabled(true);
+		
+		disconnectButton = new JButton("Rozlacz");
+		disconnectButton.setActionCommand("disconnect");
+		disconnectButton.addActionListener(buttonListener);
+		disconnectButton.setEnabled(false);
+		
 		buttonPane.add(sendButton);
 		buttonPane.add(clearButton);
+		buttonPane.add(connectButton);
+		buttonPane.add(disconnectButton);
+		
+		return buttonPane;		
 	}
 
 	private static void initIpField(JPanel optionsPane)
@@ -168,28 +201,23 @@ public class GUIClient implements Runnable
 
 	private static JPanel initOptionsPane()
 	{
-		JPanel optionsPane = new JPanel(new GridLayout(8, 2));
+		JPanel optionsPane = new JPanel(new GridLayout(Connection.FIELDS_NUMBER, 2));
+		
 		initIpField(optionsPane);
 		initPortField(optionsPane);
 		initConnectDisconnectButtons(optionsPane);
 		
-		optionsPane.add(new JLabel("IP Serwera:"));
-		optionsPane.add(ipField);
-		optionsPane.add(new JLabel("Port:"));
-		optionsPane.add(portField);
-		optionsPane.add(new JLabel());
-		optionsPane.add(new JLabel());
-		optionsPane.add(new JLabel());
-		optionsPane.add(new JLabel());
-		optionsPane.add(new JLabel());
-		optionsPane.add(new JLabel());
-		optionsPane.add(new JLabel());
-		optionsPane.add(new JLabel());
-		optionsPane.add(new JLabel());
-		optionsPane.add(new JLabel());
-		optionsPane.add(connectButton, 14);
-		optionsPane.add(disconnectButton, 15);
+		optionsPane.add(new JLabel("IP Serwera:"), 0);
+		optionsPane.add(ipField, 1);
+		optionsPane.add(new JLabel("Port:"), 2);
+		optionsPane.add(portField, 3);
 		
+		for(int i=0; i<(Connection.FIELDS_NUMBER - 2)*2 ; i++)
+		{
+			optionsPane.add(new JLabel());
+		}
+		
+		optionsPane.setPreferredSize(new Dimension(400,300));
 		return optionsPane;
 	}
 	
@@ -229,19 +257,17 @@ public class GUIClient implements Runnable
 		Byte seqNumber = Byte.valueOf(frameFields.get(EFieldIndex.SEQ_NUMBER.ordinal()).getText());
 		Byte packetsNumber = Byte.valueOf(frameFields.get(EFieldIndex.PACKET_NUMBER.ordinal()).getText());
 		Byte sequrityFlag = Byte.valueOf(frameFields.get(EFieldIndex.SEQUIRITY_FLAG.ordinal()).getText());
-		Byte dataWindowWidth = Byte.valueOf(frameFields.get(EFieldIndex.DATA_WINDOW_WIDTH.ordinal()).getText());
 		Byte dataLength = Byte.valueOf(frameFields.get(EFieldIndex.DATA_LENGTH.ordinal()).getText());
 		String data = frameFields.get(EFieldIndex.DATA.ordinal()).getText();
 		Byte checkSum = Byte.valueOf(frameFields.get(EFieldIndex.CHECK_SUM.ordinal()).getText());
 		
-		TCPFrame frame = new TCPFrame(seqNumber, packetsNumber, sequrityFlag, dataWindowWidth, dataLength, data, checkSum);
+		TCPFrame frame = new TCPFrame(seqNumber, packetsNumber, sequrityFlag, dataLength, data, checkSum);
 		return frame;
 	}
 	
 	private static void addComponents (JPanel framePane)
 	{
 		initFields();
-		initSendClearButton();
 		
 		framePane.add(new JLabel("Numer sekwencyjny:"));
 		framePane.add(frameFields.get(EFieldIndex.SEQ_NUMBER.ordinal()));
@@ -252,9 +278,6 @@ public class GUIClient implements Runnable
 		framePane.add(new JLabel("Flaga bezpieczenstwa:"));
 		framePane.add(frameFields.get(EFieldIndex.SEQUIRITY_FLAG.ordinal()));
 		
-		framePane.add(new JLabel("Szerokosc okna danych: "));
-		framePane.add(frameFields.get(EFieldIndex.DATA_WINDOW_WIDTH.ordinal()));
-		
 		framePane.add(new JLabel("Dlugosc danych:"));
 		framePane.add(frameFields.get(EFieldIndex.DATA_LENGTH.ordinal()));
 		
@@ -264,13 +287,11 @@ public class GUIClient implements Runnable
 		framePane.add(new JLabel("Suma kontrolna:"));
 		framePane.add(frameFields.get(EFieldIndex.CHECK_SUM.ordinal()));
 		
-		framePane.add(sendButton);
-		framePane.add(clearButton);
 	}
 	
 	private static JPanel initFramePane()
 	{
-		JPanel framePane = new JPanel(new GridLayout(8, 2));
+		JPanel framePane = new JPanel(new GridLayout(Connection.FIELDS_NUMBER, 2));
 		framePane.setPreferredSize(new Dimension(400,300));
 		addComponents(framePane);
 		
@@ -325,19 +346,37 @@ public class GUIClient implements Runnable
 	public static void initGUI()
 	{
 		initStatusBar();
-		initSendClearButton();
+		GridBagConstraints c = new GridBagConstraints();
+		
+		JPanel buttonPane = initButtons();
 		JPanel optionsPane = initOptionsPane();
 		JPanel framePane = initFramePane();
 
-		JPanel mainPane = new JPanel(new BorderLayout());
-		mainPane.add(statusBar, BorderLayout.SOUTH);
-		mainPane.add(optionsPane, BorderLayout.EAST);
-		mainPane.add(framePane, BorderLayout.WEST);
+		JPanel mainPane = new JPanel(new GridBagLayout());
+		
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 0;
+		c.gridy = 0;
+		mainPane.add(framePane, c);
+		
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 1;
+		c.gridy = 0;
+		mainPane.add(optionsPane, c);
+		
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridwidth = 2;
+		c.gridx = 0;
+		c.gridy = 1;
+		mainPane.add(buttonPane, c);
+		
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 0;
+		c.gridy = 2;
+		mainPane.add(statusBar, c);
 
 		mainFrame = new JFrame(Connection.name);
-		mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		mainFrame.setContentPane(mainPane);
-		mainFrame.setSize(mainFrame.getPreferredSize());
 		mainFrame.setLocation(700, 200);
 		mainFrame.pack();
 		mainFrame.setVisible(true);

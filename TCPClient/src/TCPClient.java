@@ -11,6 +11,8 @@ public class TCPClient
 	public static ObjectInputStream in = null;
 	public static ObjectOutputStream out = null;
 	
+	private static Byte windowWidth = null;
+	
 	// The thread-safe way to change the GUI components while changing state
 	private static void changeStatusTS(EConnectionStatus newConnectStatus, boolean noError)
 	{
@@ -84,6 +86,8 @@ public class TCPClient
 			in = new ObjectInputStream(socket.getInputStream());
 			out = new ObjectOutputStream(socket.getOutputStream());
 			
+			readInitMessage();
+			
 			changeStatusTS(EConnectionStatus.CONNECTED, true);
 		}
 		// If error, clean up and output an error message
@@ -92,6 +96,29 @@ public class TCPClient
 			cleanUp();
 			changeStatusTS(EConnectionStatus.DISCONNECTED, false);
 		}
+	}
+
+	private static void readInitMessage()
+	{
+		try
+		{
+			try
+			{
+				windowWidth = (Byte) in.readObject();
+			}
+			catch (ClassNotFoundException e)
+			{
+	
+			}
+			
+			System.out.println(windowWidth);
+			System.out.println(EFieldIndex.values().length);
+		}
+		catch (IOException e)
+		{
+			cleanUp();
+		}
+			
 	}
 
 	public static void handleConnectedForWriting()
@@ -159,9 +186,11 @@ public class TCPClient
 		TCPFrame frame = new TCPFrame(Connection.END_SESSION);
 		try
 		{
-			out.writeObject(frame);
-			out.flush();
-			changeStatusTS(EConnectionStatus.DISCONNECTED, true);
+			if(null != out)
+			{	out.writeObject(frame);
+				out.flush();
+				changeStatusTS(EConnectionStatus.DISCONNECTED, true);
+			}
 		}
 		catch (IOException e)
 		{

@@ -86,8 +86,8 @@ public class TCPServer
 			
 			out = new ObjectOutputStream(socket.getOutputStream());
 			in = new ObjectInputStream(socket.getInputStream());
-
-			changeStatusTS(EConnectionStatus.CONNECTED, true);
+			
+			sendInitMessage();
 		}
 		// If error, clean up and output an error message
 		catch (IOException e)
@@ -95,6 +95,22 @@ public class TCPServer
 			cleanUp();
 			changeStatusTS(EConnectionStatus.DISCONNECTED, false);
 		}
+	}
+
+	private static void sendInitMessage()
+	{
+		Byte windowWidth = 10;
+		try
+		{
+			out.writeObject(windowWidth);
+			out.flush();
+			changeStatusTS(EConnectionStatus.CONNECTED, true);
+		}
+		catch (IOException e)
+		{
+			cleanUp();
+			changeStatusTS(EConnectionStatus.DISCONNECTED, false);
+		}	
 	}
 
 	public static void handleConnectedForWriting()
