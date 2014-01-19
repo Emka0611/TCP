@@ -11,7 +11,7 @@ public class TCPClient
 	public static ObjectInputStream in = null;
 	public static ObjectOutputStream out = null;
 	
-	private static Byte windowWidth = null;
+	public static Byte windowWidth = null;
 	
 	// The thread-safe way to change the GUI components while changing state
 	private static void changeStatusTS(EConnectionStatus newConnectStatus, boolean noError)
@@ -110,9 +110,7 @@ public class TCPClient
 			{
 	
 			}
-			
-			System.out.println(windowWidth);
-			System.out.println(EFieldIndex.values().length);
+
 		}
 		catch (IOException e)
 		{
@@ -179,15 +177,17 @@ public class TCPClient
 			cleanUp();
 		}
 	}
-
+	
+	
 	public static void handleDisconnecting()
 	{
 		// Tell other chatter to disconnect as well
-		TCPFrame frame = new TCPFrame(Connection.END_SESSION);
+		TCPFrame s = new TCPFrame(Connection.END_SESSION);
 		try
 		{
-			if(null != out)
-			{	out.writeObject(frame);
+			if (null != out)
+			{
+				out.writeObject(s);
 				out.flush();
 				changeStatusTS(EConnectionStatus.DISCONNECTED, true);
 			}
@@ -196,7 +196,8 @@ public class TCPClient
 		{
 			cleanUp();
 			changeStatusTS(EConnectionStatus.DISCONNECTED, false);
-		}	
+		}
+			
 	}
 
 	// ********************************************************************
@@ -211,7 +212,8 @@ public class TCPClient
 		
 		GUIClient.initGUI();
 		
-		(new Thread(w1)).start();
+		Thread  t = new Thread(w1);
+		t.start();
 		
 		while (true)
 		{

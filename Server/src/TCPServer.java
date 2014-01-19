@@ -13,6 +13,8 @@ public class TCPServer
 	public static ObjectOutputStream out = null;
 	
 	public static String msg = null;
+	
+	private static Byte WINDOW_WIDTH = 10;
 
 	// The thread-safe way to change the GUI components while changing state
 	private static void changeStatusTS(EConnectionStatus newConnectStatus, boolean noError)
@@ -99,10 +101,9 @@ public class TCPServer
 
 	private static void sendInitMessage()
 	{
-		Byte windowWidth = 10;
 		try
 		{
-			out.writeObject(windowWidth);
+			out.writeObject(WINDOW_WIDTH);
 			out.flush();
 			changeStatusTS(EConnectionStatus.CONNECTED, true);
 		}
@@ -178,10 +179,10 @@ public class TCPServer
 	public static void handleDisconnecting()
 	{
 		// Tell other chatter to disconnect as well
-		TCPFrame frame = new TCPFrame(Connection.END_SESSION);
+		TCPFrame s = new TCPFrame(Connection.END_SESSION);
 		try
 		{
-			out.writeObject(frame);
+			out.writeObject(s);
 			out.flush();
 			changeStatusTS(EConnectionStatus.DISCONNECTED, true);
 		}

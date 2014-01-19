@@ -30,6 +30,8 @@ public class GUIClient implements Runnable
 	
 	public static JTextField ipField = null;
 	public static JTextField portField = null;
+	public static JLabel windowWidthLabel = null;
+	public static JTextField windowWidth = null;
 	
 	public static JButton connectButton = null;
 	public static JButton disconnectButton = null;
@@ -167,37 +169,8 @@ public class GUIClient implements Runnable
 				}
 			}
 		});
-	}
+	}	
 	
-	private static void initConnectDisconnectButtons(JPanel optionsPane)
-	{
-		ActionAdapter buttonListener = null;
-
-		buttonListener = new ActionAdapter()
-		{
-			public void actionPerformed(ActionEvent e)
-			{
-				if (e.getActionCommand().equals("connect"))
-				{
-					changeStatusNTS(EConnectionStatus.BEGIN_CONNECT, true);
-				}
-				else
-				{
-					changeStatusNTS(EConnectionStatus.DISCONNECTING, true);
-				}
-			}
-		};
-
-		connectButton = new JButton("Polacz");
-		connectButton.setActionCommand("connect");
-		connectButton.addActionListener(buttonListener);
-		connectButton.setEnabled(true);
-		
-		disconnectButton = new JButton("Rozlacz");
-		disconnectButton.setActionCommand("disconnect");
-		disconnectButton.addActionListener(buttonListener);
-		disconnectButton.setEnabled(false);
-	}
 
 	private static JPanel initOptionsPane()
 	{
@@ -205,14 +178,22 @@ public class GUIClient implements Runnable
 		
 		initIpField(optionsPane);
 		initPortField(optionsPane);
-		initConnectDisconnectButtons(optionsPane);
 		
-		optionsPane.add(new JLabel("IP Serwera:"), 0);
-		optionsPane.add(ipField, 1);
-		optionsPane.add(new JLabel("Port:"), 2);
-		optionsPane.add(portField, 3);
+		windowWidthLabel = new JLabel("Szerkoœæ okna danych:");
+		windowWidthLabel.setVisible(false);
 		
-		for(int i=0; i<(Connection.FIELDS_NUMBER - 2)*2 ; i++)
+		windowWidth = new JTextField();
+		windowWidth.setEnabled(false);
+		windowWidth.setVisible(false);
+		
+		optionsPane.add(new JLabel("IP Serwera:"));
+		optionsPane.add(ipField);
+		optionsPane.add(new JLabel("Port:"));
+		optionsPane.add(portField);
+		optionsPane.add(windowWidthLabel);
+		optionsPane.add(windowWidth);
+		
+		for(int i=0; i<(Connection.FIELDS_NUMBER - 3)*2 ; i++)
 		{
 			optionsPane.add(new JLabel());
 		}
@@ -364,17 +345,19 @@ public class GUIClient implements Runnable
 		c.gridy = 0;
 		mainPane.add(optionsPane, c);
 		
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridwidth = 2;
-		c.gridx = 0;
-		c.gridy = 1;
-		mainPane.add(buttonPane, c);
 		
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 0;
 		c.gridy = 2;
 		mainPane.add(statusBar, c);
 
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridwidth = 2;
+		c.gridx = 0;
+		c.gridy = 1;
+		c.ipady = 30; 
+		mainPane.add(buttonPane, c);
+		
 		mainFrame = new JFrame(Connection.name);
 		mainFrame.setContentPane(mainPane);
 		mainFrame.setLocation(700, 200);
@@ -421,6 +404,9 @@ public class GUIClient implements Runnable
 			portField.setEnabled(false);
 			statusColor.setBackground(Color.green);
 			framePanelSetEnabled(true);
+			windowWidth.setText(Byte.toString(TCPClient.windowWidth));
+			windowWidth.setVisible(true);
+			windowWidthLabel.setVisible(true);
 			break;
 
 		case BEGIN_CONNECT:
