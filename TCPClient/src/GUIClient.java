@@ -6,6 +6,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.Vector;
 
 import javax.swing.JButton;
@@ -15,7 +17,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 public class GUIClient implements Runnable
-{
+{	
 	public final static GUIClient tcpObj = new GUIClient();
 
 	public static JFrame mainFrame = null;
@@ -50,10 +52,10 @@ public class GUIClient implements Runnable
 			{
 				if (e.getActionCommand().equals("send"))
 				{
-					String s = getFrame().toString();
-					if (!s.equals(""))
+					TCPFrame frame = getFrame();
+					if (!getFrame().getData().equals(""))
 					{
-						sendString(s);
+						sendFrame(frame);
 						frameFieldsClear();
 					}
 				}
@@ -224,9 +226,15 @@ public class GUIClient implements Runnable
 	
 	private static TCPFrame getFrame() 
 	{
-		TCPFrame frame = new TCPFrame();
-		frame.setSeqNumber((byte)126);
+		Byte seqNumber = Byte.valueOf(frameFields.get(EFieldIndex.SEQ_NUMBER.ordinal()).getText());
+		Byte packetsNumber = Byte.valueOf(frameFields.get(EFieldIndex.PACKET_NUMBER.ordinal()).getText());
+		Byte sequrityFlag = Byte.valueOf(frameFields.get(EFieldIndex.SEQUIRITY_FLAG.ordinal()).getText());
+		Byte dataWindowWidth = Byte.valueOf(frameFields.get(EFieldIndex.DATA_WINDOW_WIDTH.ordinal()).getText());
+		Byte dataLength = Byte.valueOf(frameFields.get(EFieldIndex.DATA_LENGTH.ordinal()).getText());
+		String data = frameFields.get(EFieldIndex.DATA.ordinal()).getText();
+		Byte checkSum = Byte.valueOf(frameFields.get(EFieldIndex.CHECK_SUM.ordinal()).getText());
 		
+		TCPFrame frame = new TCPFrame(seqNumber, packetsNumber, sequrityFlag, dataWindowWidth, dataLength, data, checkSum);
 		return frame;
 	}
 	
@@ -236,25 +244,25 @@ public class GUIClient implements Runnable
 		initSendClearButton();
 		
 		framePane.add(new JLabel("Numer sekwencyjny:"));
-		framePane.add(frameFields.get(0));
+		framePane.add(frameFields.get(EFieldIndex.SEQ_NUMBER.ordinal()));
 		
 		framePane.add(new JLabel("Liczba pakietow:"));
-		framePane.add(frameFields.get(1));
+		framePane.add(frameFields.get(EFieldIndex.PACKET_NUMBER.ordinal()));
 
 		framePane.add(new JLabel("Flaga bezpieczenstwa:"));
-		framePane.add(frameFields.get(2));
+		framePane.add(frameFields.get(EFieldIndex.SEQUIRITY_FLAG.ordinal()));
 		
 		framePane.add(new JLabel("Szerokosc okna danych: "));
-		framePane.add(frameFields.get(3));
+		framePane.add(frameFields.get(EFieldIndex.DATA_WINDOW_WIDTH.ordinal()));
 		
 		framePane.add(new JLabel("Dlugosc danych:"));
-		framePane.add(frameFields.get(4));
+		framePane.add(frameFields.get(EFieldIndex.DATA_LENGTH.ordinal()));
 		
 		framePane.add(new JLabel("Dane:"));
-		framePane.add(frameFields.get(5));
+		framePane.add(frameFields.get(EFieldIndex.DATA.ordinal()));
 		
 		framePane.add(new JLabel("Suma kontrolna:"));
-		framePane.add(frameFields.get(6));
+		framePane.add(frameFields.get(EFieldIndex.CHECK_SUM.ordinal()));
 		
 		framePane.add(sendButton);
 		framePane.add(clearButton);
@@ -306,11 +314,11 @@ public class GUIClient implements Runnable
 		tcpObj.run();
 	}
 	
-	private static void sendString(String s)
+	public static void sendFrame(TCPFrame frame)
 	{
 		synchronized (Connection.toSend)
 		{
-			Connection.toSend = s;
+			Connection.toSend = frame;
 		}
 	}
 
@@ -333,7 +341,17 @@ public class GUIClient implements Runnable
 		mainFrame.setLocation(700, 200);
 		mainFrame.pack();
 		mainFrame.setVisible(true);
+		
+		mainFrame.addWindowListener(new WindowAdapter()
+		{
+			public void windowClosing(WindowEvent e)
+			{
+				changeStatusNTS(EConnectionStatus.DISCONNECTING, true);
+				System.exit(0);
+			}
+		});
 	}
+	
 
 	public void run()
 	{

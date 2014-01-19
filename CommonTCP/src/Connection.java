@@ -1,7 +1,7 @@
 
 public class Connection
 {
-	public final static String END_CHAT_SESSION = "END";
+	public final static String END_SESSION = "END";
 	
 	public final static String statusMessages[] = { 
 		" B³¹d! Nie mo¿na po³¹czyæ!",
@@ -14,9 +14,9 @@ public class Connection
 	public static int port = 1234;
 	public static boolean isHost = false;
 	public static EConnectionStatus connectionStatus = EConnectionStatus.DISCONNECTED;
-	public static String name = "Simple TCP Client";
+	public static String name = "";
 	public static String statusString = statusMessages[connectionStatus.ordinal()];
 	public static StringBuffer toAppend = new StringBuffer("");
-	public static String toSend = "";
+	public static TCPFrame toSend = new TCPFrame("");
 	public final static int FIELDS_NUMBER = 7; 
 }

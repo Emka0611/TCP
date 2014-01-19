@@ -8,6 +8,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -171,13 +173,13 @@ public class GUIServer implements Runnable
 		{
 			public void actionPerformed(ActionEvent e)
 			{
-				String s = chatLine.getText();
-				if (!s.equals(""))
+				TCPFrame frame = new TCPFrame(chatLine.getText());
+				if (!frame.getData().equals(""))
 				{
-					appendToChatBox("OUTGOING: " + s + "\n");
-					chatLine.selectAll();
+					appendToChatBox("OUTGOING: " + frame.getData() + "\n");
+					//chatLine.selectAll();
 
-					sendString(s);
+					sendFrame(frame);
 					chatLine.setText("");
 				}
 			}
@@ -225,6 +227,15 @@ public class GUIServer implements Runnable
 		mainFrame.setLocation(200, 200);
 		mainFrame.pack();
 		mainFrame.setVisible(true);
+		
+		mainFrame.addWindowListener(new WindowAdapter()
+		{
+			public void windowClosing(WindowEvent e)
+			{
+				changeStatusNTS(EConnectionStatus.DISCONNECTING, true);
+				System.exit(0);
+			}
+		});
 	}
 
 	// The non-thread-safe way to change the GUI components while changing state
@@ -310,12 +321,11 @@ public class GUIServer implements Runnable
 		}
 	}
 
-	private static void sendString(String s)
+	public static void sendFrame(TCPFrame frame)
 	{
 		synchronized (Connection.toSend)
 		{
-			//Connection.toSend.append(s);
-			Connection.toSend = s;
+			Connection.toSend = frame;
 		}
 	}
 }

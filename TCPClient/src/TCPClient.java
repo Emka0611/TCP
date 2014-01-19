@@ -1,5 +1,7 @@
 import java.io.*;
+
 import javax.swing.*;
+
 import java.net.*;
 
 public class TCPClient
@@ -34,7 +36,7 @@ public class TCPClient
 	{
 		try
 		{
-			if (socket != null)
+			if (null != socket)
 			{
 				socket.close();
 				socket = null;
@@ -47,7 +49,7 @@ public class TCPClient
 
 		try
 		{
-			if (in != null)
+			if (null != in)
 			{
 				in.close();
 				in = null;
@@ -60,7 +62,7 @@ public class TCPClient
 
 		try
 		{
-			if (out != null)
+			if (null != out)
 			{
 				out.close();
 				out = null;
@@ -97,11 +99,11 @@ public class TCPClient
 		try
 		{
 			// Send data
-			if (Connection.toSend.length() != 0)
+			if (Connection.toSend.getData().length() != 0)
 			{
 				out.writeObject(Connection.toSend);
 				out.flush();
-				Connection.toSend = "";
+				Connection.toSend = new TCPFrame("");
 				changeStatusTS(EConnectionStatus.NULL, true);
 			}
 		}
@@ -114,23 +116,26 @@ public class TCPClient
 	
 	public static void handleConnectedForReading()
 	{
-		String s = null;
+		TCPFrame frame = null;
 		try
 		{
 			// Receive data
-			try
+			if(null != in)
 			{
-				s = (String) in.readObject();
-			}
-			catch (ClassNotFoundException e)
-			{
-
+				try
+				{
+					frame = (TCPFrame) in.readObject();
+				}
+				catch (ClassNotFoundException e)
+				{
+	
+				}
 			}
 			
-			if ((s != null) && (s.length() != 0))
+			if ((frame != null) && (frame.getData().length() != 0))
 			{
 				// Check if it is the end of a transmission
-				if (s.equals(Connection.END_CHAT_SESSION))
+				if (frame.getData().equals(Connection.END_SESSION))
 				{
 					changeStatusTS(EConnectionStatus.DISCONNECTING, true);
 				}
@@ -148,20 +153,21 @@ public class TCPClient
 		}
 	}
 
-	private static void handleDisconnecting()
+	public static void handleDisconnecting()
 	{
+		// Tell other chatter to disconnect as well
+		TCPFrame frame = new TCPFrame(Connection.END_SESSION);
 		try
 		{
-			// Tell other chatter to disconnect as well
-			out.writeObject(Connection.END_CHAT_SESSION);
+			out.writeObject(frame);
 			out.flush();
+			changeStatusTS(EConnectionStatus.DISCONNECTED, true);
 		}
 		catch (IOException e)
 		{
-		}
-			
-		cleanUp();
-		changeStatusTS(EConnectionStatus.DISCONNECTED, true);
+			cleanUp();
+			changeStatusTS(EConnectionStatus.DISCONNECTED, false);
+		}	
 	}
 
 	// ********************************************************************
