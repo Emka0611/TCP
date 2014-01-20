@@ -27,7 +27,24 @@ public class FramePane
 			pane.add(frameFields.get(i));
 		}
 		
-		setEnabled(false);
+		setEnabled(true);
+		pane.setPreferredSize(new Dimension(PANE_SIZE_X, PANE_SIZE_Y));
+	}
+	
+	public FramePane(String s)
+	{		
+		frameFields = new Vector<JTextField>();
+		pane = new JPanel(new GridLayout(1, Connection.FIELDS_NUMBER));
+		
+		for(int i=0; i<Connection.FIELDS_NUMBER; i++)
+		{
+			frameFields.add(new JTextField());
+			pane.add(frameFields.get(i));
+		}
+		
+		frameFields.get(EFieldIndex.DATA.ordinal()).setText(s);
+		
+		setEnabled(true);
 		pane.setPreferredSize(new Dimension(PANE_SIZE_X, PANE_SIZE_Y));
 	}
 	

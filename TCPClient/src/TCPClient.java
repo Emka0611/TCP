@@ -12,7 +12,6 @@ public class TCPClient
 	public static ObjectOutputStream out = null;
 	
 	public static Byte windowWidth = 0;
-	public static String message = null;
 	
 	// The thread-safe way to change the GUI components while changing state
 	private static void changeStatusTS(EConnectionStatus newConnectStatus, boolean noError)

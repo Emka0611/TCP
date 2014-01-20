@@ -12,6 +12,9 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 //import java.util.Vector;
 
+import java.util.ArrayList;
+import java.util.Vector;
+
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -22,9 +25,8 @@ public class GUIClient implements Runnable
 {	
 	public final static GUIClient tcpObj = new GUIClient();
 
-	public  static JTextField messageField = null;
-	public static JFrame mainFrame = null;
-	
+	public static JTextField messageField = null;
+	public static JFrame mainFrame = new JFrame(Connection.name);
 	public static JPanel statusBar = null;
 	public static JLabel statusField = null;
 	public static JTextField statusColor = null;
@@ -40,7 +42,10 @@ public class GUIClient implements Runnable
 	public static JButton sendButton = null;
 	public static JButton clearButton = null;
 	
-	public static FramePane framePane = new FramePane();
+	public static Vector<FramePane> framePaneVector = new Vector<FramePane>();
+	
+	public static JPanel mainPane = new JPanel(new GridBagLayout());
+	public static JPanel buttonPane;
 	
 	public static final int OPT_SIZE_X = 300;
 	public static final int OPT_SIZE_Y = 100;
@@ -58,7 +63,51 @@ public class GUIClient implements Runnable
 	
 	private static void generateFrames()
 	{	
-		//TODO
+		framePaneVector.clear();
+		String tab[] = calculateSubstrings();
+		for (int i=0; i<tab.length; i++)
+		{
+			framePaneVector.add(new FramePane(tab[i]));
+		}
+		initGUI();
+	}
+	
+	private static String[] calculateSubstrings()
+	{
+		String msg = messageField.getText();
+		int len = msg.length();
+		int frameSize = TCPClient.windowWidth;
+		
+		int frames = len/frameSize;
+		
+		if (0 != len % frameSize)
+		{
+			frames+=1;
+		}
+			
+		String tab[] = new String[frames];
+		
+		if (0 != len)
+		{
+			int startIndex;
+			int endIndex;
+			
+			for(int i = 0; i<frames; i++ )
+			{
+				startIndex = i*frameSize;
+				endIndex = startIndex + frameSize;
+				
+				if (endIndex > len)
+				{
+					endIndex = len;
+				}
+				
+				tab[i] = msg.substring(startIndex, endIndex);
+				System.out.println(tab[i]);
+			}
+		}
+		
+		return tab;
 	}
 	
 	private static JPanel initMessagePane()
@@ -66,24 +115,7 @@ public class GUIClient implements Runnable
 		JPanel messagePane = new JPanel(new GridLayout(3,1));
 		
 		messageField = new JTextField(10);
-		messageField.setEnabled(false);
-		messageField.addFocusListener(new FocusAdapter()
-		{
-			public void focusLost(FocusEvent e)
-			{
-				messageField.selectAll();
-				
-				// Should be editable only when disconnected
-				if (Connection.connectionStatus != EConnectionStatus.DISCONNECTED)
-				{
-					changeStatusNTS(EConnectionStatus.NULL, true);
-				}
-				else
-				{
-					TCPClient.message = messageField.getText();
-				}
-			}
-		});
+		messageField.setEnabled(false);	
 		
 		ActionAdapter buttonListener = new ActionAdapter()
 		{
@@ -99,7 +131,6 @@ public class GUIClient implements Runnable
 		generateButton = new JButton("Oblicz ramki");
 		generateButton.setActionCommand("generate");
 		generateButton.addActionListener(buttonListener);
-		generateButton.setEnabled(false);
 		
 		
 		messagePane.add(new JLabel("Wpisz wiadomosc:"));
@@ -191,27 +222,26 @@ public class GUIClient implements Runnable
 		return optionsPane;
 	}
 	
-	private static JPanel initButtons()
+	private static void initButtons()
 	{
 		ActionAdapter buttonListener = null;
 	
-		JPanel buttonPane = new JPanel(new GridLayout(1, 4));
+		buttonPane = new JPanel(new GridLayout(1, 4));
 		buttonListener = new ActionAdapter()
 		{
 			public void actionPerformed(ActionEvent e)
 			{
 				if (e.getActionCommand().equals("send"))
 				{
-					TCPFrame frame = framePane.getFrame();
-					if (!framePane.getFrame().getData().equals(""))
+					/*if (!framePane.getFrame().getData().equals(""))
 					{
 						sendFrame(frame);
 						framePane.clear();
-					}
+					}*/
 				}
 				else
 				{
-					framePane.clear();
+					//framePane.clear();
 				}
 			}
 		};
@@ -238,7 +268,9 @@ public class GUIClient implements Runnable
 				}
 				else
 				{
+					framePaneVector.clear();
 					changeStatusNTS(EConnectionStatus.DISCONNECTING, true);
+					initGUI();
 				}
 			}
 		};
@@ -257,15 +289,8 @@ public class GUIClient implements Runnable
 		buttonPane.add(clearButton);
 		buttonPane.add(connectButton);
 		buttonPane.add(disconnectButton);
-		
-		return buttonPane;		
+			
 	}
-
-
-
-
-	
-
 	
 /*	private static void addComponentsToFramePane (JPanel framePane)
 	{
@@ -350,16 +375,17 @@ public class GUIClient implements Runnable
 
 	public static void initGUI()
 	{
-		JPanel messagePane = initMessagePane();
-		initStatusBar();
-		GridBagConstraints c = new GridBagConstraints();
 		
-		JPanel buttonPane = initButtons();
+		mainPane.removeAll();
+		
+		JPanel messagePane = initMessagePane();
 		JPanel optionsPane = initOptionsPane();
 		JPanel framePaneLabel = initFramePaneLabel();
-
-		JPanel mainPane = new JPanel(new GridBagLayout());
 		
+		initStatusBar();
+		initButtons();
+		GridBagConstraints c = new GridBagConstraints();
+
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 0;
 		c.gridy = 0;
@@ -372,29 +398,28 @@ public class GUIClient implements Runnable
 		
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 0;
-		c.gridy = 2;
+		c.gridy = 1;
 		mainPane.add(framePaneLabel, c);
 		
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridy = 3;
-		mainPane.add(framePane.getPane(), c);
+		int size = framePaneVector.size();
 		
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 0;
-		c.gridy = 5;
-		mainPane.add(statusBar, c);
-
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridwidth = 2;
-		c.gridx = 0;
-		c.gridy = 4;
+	
+		for (int i = 0; i<size; i++)
+		{
+			c.gridy = i+2;
+			mainPane.add(framePaneVector.get(i).getPane(), c);
+		}
+		
+		c.gridy = size + 2;
 		c.ipady = 30; 
 		mainPane.add(buttonPane, c);
 		
-
+		c.gridy = size + 3;
+		c.ipady = 0;
+		mainPane.add(statusBar, c);
 		
-		mainFrame = new JFrame(Connection.name);
 		mainFrame.setContentPane(mainPane);
 		mainFrame.setLocation(100, 400);
 		mainFrame.pack();
@@ -408,7 +433,10 @@ public class GUIClient implements Runnable
 				System.exit(0);
 			}
 		});
+		
+		changeStatusNTS(EConnectionStatus.NULL, true);
 	}
+
 
 	public void run()
 	{
@@ -423,7 +451,6 @@ public class GUIClient implements Runnable
 			ipField.setEnabled(true);
 			portField.setEnabled(true);
 			statusColor.setBackground(Color.red);
-			framePane.setEnabled(false);
 			messageField.setEnabled(false);
 			break;
 
@@ -436,7 +463,6 @@ public class GUIClient implements Runnable
 			ipField.setEnabled(false);
 			portField.setEnabled(false);
 			statusColor.setBackground(Color.orange);
-			framePane.setEnabled(false);
 			messageField.setEnabled(false);
 			break;
 
@@ -449,7 +475,6 @@ public class GUIClient implements Runnable
 			ipField.setEnabled(false);
 			portField.setEnabled(false);
 			statusColor.setBackground(Color.green);
-			framePane.setEnabled(true);
 			windowWidth.setText(Byte.toString(TCPClient.windowWidth));
 			windowWidth.setVisible(true);
 			windowWidthLabel.setVisible(true);
@@ -465,7 +490,6 @@ public class GUIClient implements Runnable
 			ipField.setEnabled(false);
 			portField.setEnabled(false);
 			statusColor.setBackground(Color.orange);
-			framePane.setEnabled(false);
 			messageField.setEnabled(false);
 			break;
 
