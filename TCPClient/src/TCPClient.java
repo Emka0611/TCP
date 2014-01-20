@@ -53,14 +53,6 @@ public class TCPClient
 		
 		return tab;
 	}
-
-	public static void sendFrame(TCPFrame frame)
-	{
-		synchronized (Connection.toSend)
-		{
-			Connection.toSend = frame;
-		}
-	}
 	
 	// The thread-safe way to change the GUI components while changing state
 	private static void changeStatusTS(EConnectionStatus newConnectStatus, boolean noError)
@@ -136,8 +128,8 @@ public class TCPClient
 			out = new ObjectOutputStream(socket.getOutputStream());
 			
 			readInitMessage();
-			
 			changeStatusTS(EConnectionStatus.CONNECTED, true);
+
 		}
 		// If error, clean up and output an error message
 		catch (IOException e)
@@ -173,16 +165,20 @@ public class TCPClient
 		try
 		{
 			// Send data
-			if (Connection.toSend.getData().length() != 0)
+			if (null != Connection.toSend && Connection.toSend.length != 0)
 			{
-				if(false != Connection.toSend.getSequrityFlag())
-				{
-					Connection.toSend.encryptData();
-				}
 				
+				for(int i=0; i<Connection.toSend.length; i++)
+				{
+					if(false != Connection.toSend[i].getSequrityFlag())
+					{
+						Connection.toSend[i].encryptData();
+					}
+				}
+
 				out.writeObject(Connection.toSend);
 				out.flush();
-				Connection.toSend = new TCPFrame("");
+				Connection.toSend = null;
 				changeStatusTS(EConnectionStatus.NULL, true);
 			}
 		}
@@ -195,7 +191,7 @@ public class TCPClient
 	
 	public static void handleConnectedForReading()
 	{
-		TCPFrame frame = null;
+		TCPFrame[] frame = null;
 		try
 		{
 			// Receive data
@@ -203,7 +199,7 @@ public class TCPClient
 			{
 				try
 				{
-					frame = (TCPFrame) in.readObject();
+					frame = (TCPFrame[]) in.readObject();
 				}
 				catch (ClassNotFoundException e)
 				{
@@ -211,14 +207,13 @@ public class TCPClient
 				}
 			}
 			
-			if ((frame != null) && (frame.getData().length() != 0))
+			if ((frame != null) && (frame.length != 0))
 			{
 				// Check if it is the end of a transmission
-				if (frame.getData().equals(Connection.END_SESSION))
+				if (frame[0].getData().equals(Connection.END_SESSION))
 				{
 					changeStatusTS(EConnectionStatus.DISCONNECTING, true);
 				}
-
 				// Otherwise, receive what text
 				else
 				{
@@ -239,7 +234,7 @@ public class TCPClient
 		message = "";
 		GUIClient.framePaneVector.clear();
 	
-		TCPFrame s = new TCPFrame(Connection.END_SESSION);
+		TCPFrame[] s = {new TCPFrame(Connection.END_SESSION)}; 
 		try
 		{
 			if (null != out)

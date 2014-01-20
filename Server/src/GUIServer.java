@@ -173,12 +173,13 @@ public class GUIServer implements Runnable
 		{
 			public void actionPerformed(ActionEvent e)
 			{
-				TCPFrame frame = new TCPFrame(chatLine.getText());
-				if (!frame.getData().equals(""))
+				TCPFrame[] frame = {new TCPFrame(chatLine.getText())};
+						
+				if (!frame[1].getData().equals(""))
 				{
-					appendToChatBox("OUTGOING: " + frame.getData() + "\n");
+					appendToChatBox("OUTGOING: " + frame[1].getData() + "\n");
 
-					sendFrame(frame);
+					sendFrames(frame);
 					chatLine.setText("");
 				}
 			}
@@ -320,11 +321,13 @@ public class GUIServer implements Runnable
 		}
 	}
 
-	public static void sendFrame(TCPFrame frame)
+	public static void sendFrames(TCPFrame[] frames)
 	{
+		Connection.toSend = new TCPFrame[frames.length];
+		
 		synchronized (Connection.toSend)
 		{
-			Connection.toSend = frame;
+			Connection.toSend = frames;
 		}
 	}
 }

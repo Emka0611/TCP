@@ -119,13 +119,14 @@ public class TCPServer
 		try
 		{
 			// Send data
-			if (Connection.toSend.getData().length() != 0)
+			if (null != Connection.toSend && Connection.toSend.length != 0)
 			{
 				out.writeObject(Connection.toSend);
 				out.flush();
-				Connection.toSend = new TCPFrame("");
+				Connection.toSend = null;
 				changeStatusTS(EConnectionStatus.NULL, true);
 			}
+
 		}
 		catch (IOException e)
 		{
@@ -136,16 +137,15 @@ public class TCPServer
 	
 	public static void handleConnectedForReading()
 	{
-		TCPFrame frame = null;
+		TCPFrame[] frame = null;
 		try
 		{
-			
 			if(null != in)
 			{
 				// Receive data
 				try
 				{
-					frame = (TCPFrame) in.readObject();
+					frame = (TCPFrame[]) in.readObject();
 				}
 				catch (ClassNotFoundException e)
 				{
@@ -153,11 +153,10 @@ public class TCPServer
 				}
 			}
 			
-			
-			if ((frame != null) && (frame.getData().length() != 0))
+			if ((frame != null) && (frame.length != 0))
 			{
 				// Check if it is the end of a transmission
-				if (frame.getData().equals(Connection.END_SESSION))
+				if (frame[0].getData().equals(Connection.END_SESSION))
 				{
 					changeStatusTS(EConnectionStatus.DISCONNECTING, true);
 				}
@@ -165,7 +164,10 @@ public class TCPServer
 				// Otherwise, receive what text
 				else
 				{
-					GUIServer.appendToChatBox("INCOMING: " + frame.toString() + "\n");
+					for(int i=0; i<frame.length; i++)
+					{
+						GUIServer.appendToChatBox("INCOMING: " + frame[i].toString() + "\n");
+					}
 					changeStatusTS(EConnectionStatus.NULL, true);
 				}
 			}
@@ -179,7 +181,7 @@ public class TCPServer
 	public static void handleDisconnecting()
 	{
 		// Tell other chatter to disconnect as well
-		TCPFrame s = new TCPFrame(Connection.END_SESSION);
+		TCPFrame[] s = {new TCPFrame(Connection.END_SESSION)};
 		try
 		{
 			if(null != out)
