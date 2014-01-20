@@ -8,59 +8,50 @@ import javax.swing.JTextField;
 
 public class FramePane
 {
-	private JPanel pane = null;
+	private JPanel pane = new JPanel(new GridLayout(1, Connection.FIELDS_NUMBER));
 	
-	public Vector<JTextField> frameFields = null;
-	public Checkbox sequrityFlag = null;
+	public Vector<JTextField> frameFields = new Vector<JTextField>();
+	public Checkbox sequrityFlagCheckbox = new Checkbox();
 	
 	public static final int PANE_SIZE_X = 900;
 	public static final int PANE_SIZE_Y = 40;
 	
-	public FramePane()
-	{		
-		frameFields = new Vector<JTextField>();
-		sequrityFlag = new Checkbox();
-		sequrityFlag.setState(true);
-		
-		pane = new JPanel(new GridLayout(1, Connection.FIELDS_NUMBER));
-		
-		for(int i=0; i<Connection.FIELDS_NUMBER; i++)
-		{
-			frameFields.add(new JTextField());
-			pane.add(frameFields.get(i));
-		}
-		pane.setPreferredSize(new Dimension(PANE_SIZE_X, PANE_SIZE_Y));
-	}
 	
-	public FramePane(String s)
+	public FramePane(TCPFrame frame)
 	{		
-		frameFields = new Vector<JTextField>();
-		sequrityFlag = new Checkbox();
-		sequrityFlag.setState(true);
-		
-		pane = new JPanel(new GridLayout(1, Connection.FIELDS_NUMBER));
-		
 		for(int i=0; i<Connection.FIELDS_NUMBER-1; i++)
 		{
 			frameFields.add(new JTextField());
 			pane.add(frameFields.get(i));
 		}
-		pane.add(sequrityFlag);
-		
-		frameFields.get(EFieldIndex.DATA.ordinal()).setText(s);	
+		pane.add(sequrityFlagCheckbox);
 		pane.setPreferredSize(new Dimension(PANE_SIZE_X, PANE_SIZE_Y));
+		
+		fillFields(frame);
 	}
 	
+	private void fillFields(TCPFrame frame)
+	{
+		frameFields.get(EFieldIndex.PACKET_NUMBER.ordinal()).setText(frame.getPacketsNumer().toString());		
+		frameFields.get(EFieldIndex.SEQ_NUMBER.ordinal()).setText(frame.getSeqNumber().toString());
+		frameFields.get(EFieldIndex.DATA_LENGTH.ordinal()).setText(frame.getDataLength().toString());		
+		frameFields.get(EFieldIndex.DATA.ordinal()).setText(frame.getData().toString());
+		frameFields.get(EFieldIndex.CHECK_SUM.ordinal()).setText(frame.getCheckSum().toString());
+		
+		sequrityFlagCheckbox.setState(frame.getSequrityFlag());
+		
+	}
+
 	public void setEnabled(boolean enabled)
 	{
-		if(null != frameFields && null != sequrityFlag)
+		if(null != frameFields && null != sequrityFlagCheckbox)
 		{			
 			for(int i=0; i<Connection.FIELDS_NUMBER-1; i++)
 			{
 				frameFields.get(i).setEnabled(enabled);
 			}
 			
-			sequrityFlag.setEnabled(enabled);
+			sequrityFlagCheckbox.setEnabled(enabled);
 		}
 	}
 	
@@ -70,7 +61,7 @@ public class FramePane
 		{
 			frameFields.get(i).setText("");
 		}
-		sequrityFlag.setState(false);
+		sequrityFlagCheckbox.setState(false);
 	}
 
 	public TCPFrame getFrame() 
@@ -80,19 +71,9 @@ public class FramePane
 		Byte dataLength = Byte.valueOf(frameFields.get(EFieldIndex.DATA_LENGTH.ordinal()).getText());
 		String data = frameFields.get(EFieldIndex.DATA.ordinal()).getText();
 		Byte checkSum = Byte.valueOf(frameFields.get(EFieldIndex.CHECK_SUM.ordinal()).getText());
+		Boolean sequrityFlag = this.sequrityFlagCheckbox.getState();
 		
-		Byte sequrityFlag;
-		
-		if (false == this.sequrityFlag.getState())
-		{
-			sequrityFlag = 0; 
-		}
-		else
-		{
-			sequrityFlag = 1;
-		}
-		
-		TCPFrame frame = new TCPFrame(seqNumber, packetsNumber, sequrityFlag, dataLength, data, checkSum);
+		TCPFrame frame = new TCPFrame(seqNumber, packetsNumber, dataLength, data, checkSum, sequrityFlag);
 		return frame;
 	}
 	

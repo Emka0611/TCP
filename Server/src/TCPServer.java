@@ -182,9 +182,14 @@ public class TCPServer
 		TCPFrame s = new TCPFrame(Connection.END_SESSION);
 		try
 		{
-			out.writeObject(s);
-			out.flush();
-			changeStatusTS(EConnectionStatus.DISCONNECTED, true);
+			if(null != out)
+			{
+				out.writeObject(s);
+				out.flush();
+				changeStatusTS(EConnectionStatus.DISCONNECTED, true);
+			}
+			else
+				changeStatusTS(EConnectionStatus.DISCONNECTED, false);
 		}
 		catch (IOException e)
 		{

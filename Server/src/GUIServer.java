@@ -177,7 +177,6 @@ public class GUIServer implements Runnable
 				if (!frame.getData().equals(""))
 				{
 					appendToChatBox("OUTGOING: " + frame.getData() + "\n");
-					//chatLine.selectAll();
 
 					sendFrame(frame);
 					chatLine.setText("");

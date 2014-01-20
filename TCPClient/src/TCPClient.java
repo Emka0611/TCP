@@ -12,6 +12,55 @@ public class TCPClient
 	public static ObjectOutputStream out = null;
 	
 	public static Byte windowWidth = 0;
+	public static String message = null;
+	
+	
+	public static TCPFrame[] calculateFrames()
+	{	
+		int frames = message.length()/windowWidth;
+		
+		if (0 != message.length() % windowWidth)
+		{
+			frames+=1;
+		}
+			
+		TCPFrame tab[] = new TCPFrame[frames];
+		
+		if (0 != message.length())
+		{
+			int startIndex;
+			int endIndex;
+			
+			for(int i = 0; i<frames; i++ )
+			{
+				startIndex = i*windowWidth;
+				endIndex = startIndex + windowWidth;
+				
+				if (endIndex > message.length())
+				{
+					endIndex = message.length();
+				}
+				
+				tab[i] = new TCPFrame(message.substring(startIndex, endIndex));
+				tab[i].setPacketsNumer((byte)frames);
+				tab[i].setSeqNumber((byte) i);
+				tab[i].setDataLength((byte)message.substring(startIndex, endIndex).length());
+				tab[i].calculateChecksum();
+				tab[i].crc16();
+				tab[i].setSequrityFlag(true);
+			}
+		}
+		
+		return tab;
+	}
+
+	public static void sendFrame(TCPFrame frame)
+	{
+		synchronized (Connection.toSend)
+		{
+			Connection.toSend = frame;
+		}
+	}
 	
 	// The thread-safe way to change the GUI components while changing state
 	private static void changeStatusTS(EConnectionStatus newConnectStatus, boolean noError)
@@ -126,6 +175,11 @@ public class TCPClient
 			// Send data
 			if (Connection.toSend.getData().length() != 0)
 			{
+				if(false != Connection.toSend.getSequrityFlag())
+				{
+					Connection.toSend.encryptData();
+				}
+				
 				out.writeObject(Connection.toSend);
 				out.flush();
 				Connection.toSend = new TCPFrame("");
@@ -182,10 +236,9 @@ public class TCPClient
 	public static void handleDisconnecting()
 	{
 		// Tell other chatter to disconnect as well
-		
+		message = "";
 		GUIClient.framePaneVector.clear();
-		GUIClient.initGUI();
-
+	
 		TCPFrame s = new TCPFrame(Connection.END_SESSION);
 		try
 		{
@@ -201,7 +254,8 @@ public class TCPClient
 			cleanUp();
 			changeStatusTS(EConnectionStatus.DISCONNECTED, false);
 		}
-			
+		
+		GUIClient.updateGUI();			
 	}
 
 	// ********************************************************************
@@ -214,7 +268,8 @@ public class TCPClient
 		
 		WatekNasluchujacy w1 = new WatekNasluchujacy();
 		
-		GUIClient.initGUI();
+		GUIClient.mainFrame.setLocation(100, 400);
+		GUIClient.updateGUI();
 		
 		Thread  t = new Thread(w1);
 		t.start();

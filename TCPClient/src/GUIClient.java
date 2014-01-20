@@ -61,49 +61,14 @@ public class GUIClient implements Runnable
 	private static void generateFrames()
 	{	
 		framePaneVector.clear();
-		String tab[] = calculateSubstrings();
+		TCPFrame tab[] = TCPClient.calculateFrames();
+		
 		for (int i=0; i<tab.length; i++)
 		{
 			framePaneVector.add(new FramePane(tab[i]));
 		}
-		initGUI();
-	}
-	
-	private static String[] calculateSubstrings()
-	{
-		String msg = messageField.getText();
-		int len = msg.length();
-		int frameSize = TCPClient.windowWidth;
 		
-		int frames = len/frameSize;
-		
-		if (0 != len % frameSize)
-		{
-			frames+=1;
-		}
-			
-		String tab[] = new String[frames];
-		
-		if (0 != len)
-		{
-			int startIndex;
-			int endIndex;
-			
-			for(int i = 0; i<frames; i++ )
-			{
-				startIndex = i*frameSize;
-				endIndex = startIndex + frameSize;
-				
-				if (endIndex > len)
-				{
-					endIndex = len;
-				}
-				
-				tab[i] = msg.substring(startIndex, endIndex);
-			}
-		}
-		
-		return tab;
+		updateGUI();
 	}
 	
 	private static JPanel initMessagePane()
@@ -119,6 +84,7 @@ public class GUIClient implements Runnable
 			{
 				if (e.getActionCommand().equals("generate"))
 				{
+					TCPClient.message = messageField.getText();
 					generateFrames();
 				}
 			}
@@ -132,6 +98,7 @@ public class GUIClient implements Runnable
 		messagePane.add(new JLabel("Wpisz wiadomosc:"));
 		messagePane.add(messageField);
 		messagePane.add(generateButton);
+		
 		messagePane.setPreferredSize(new Dimension(MSG_SIZE_X,MSG_SIZE_Y));
 		
 		return messagePane;
@@ -229,15 +196,11 @@ public class GUIClient implements Runnable
 			{
 				if (e.getActionCommand().equals("send"))
 				{
-					/*if (!framePane.getFrame().getData().equals(""))
-					{
-						sendFrame(frame);
-						framePane.clear();
-					}*/
+					encryptData(messageField.getText());
 				}
 				else
 				{
-					//framePane.clear();
+					
 				}
 			}
 		};
@@ -287,23 +250,6 @@ public class GUIClient implements Runnable
 			
 	}
 	
-/*	private static void addComponentsToFramePane (JPanel framePane)
-	{
-		
-		framePane.add(frameFields.get(EFieldIndex.SEQ_NUMBER.ordinal()));
-		
-		framePane.add(frameFields.get(EFieldIndex.PACKET_NUMBER.ordinal()));
-
-		framePane.add(frameFields.get(EFieldIndex.SEQUIRITY_FLAG.ordinal()));
-		
-		framePane.add(frameFields.get(EFieldIndex.DATA_LENGTH.ordinal()));
-		
-		framePane.add(frameFields.get(EFieldIndex.DATA.ordinal()));
-		
-		framePane.add(frameFields.get(EFieldIndex.CHECK_SUM.ordinal()));
-		
-	} */
-	
 	private static JPanel initFramePaneLabel()
 	{
 		JPanel framePane = new JPanel(new GridLayout(1, Connection.FIELDS_NUMBER));
@@ -341,7 +287,7 @@ public class GUIClient implements Runnable
 	}
 
 	// The non-thread-safe way to change the GUI components while changing state
-	private static void changeStatusNTS(EConnectionStatus newConnectStatus, boolean noError)
+	public static void changeStatusNTS(EConnectionStatus newConnectStatus, boolean noError)
 	{
 		if (newConnectStatus != EConnectionStatus.NULL)
 		{
@@ -360,15 +306,7 @@ public class GUIClient implements Runnable
 		tcpObj.run();
 	}
 	
-	public static void sendFrame(TCPFrame frame)
-	{
-		synchronized (Connection.toSend)
-		{
-			Connection.toSend = frame;
-		}
-	}
-
-	public static void initGUI()
+	public static void updateGUI()
 	{
 		mainPane.removeAll();
 		
@@ -415,7 +353,6 @@ public class GUIClient implements Runnable
 		mainPane.add(statusBar, c);
 		
 		mainFrame.setContentPane(mainPane);
-		mainFrame.setLocation(100, 400);
 		mainFrame.pack();
 		mainFrame.setVisible(true);
 		
@@ -495,9 +432,22 @@ public class GUIClient implements Runnable
 		portField.setText((new Integer(Connection.port)).toString());
 		statusField.setText(Connection.statusString);
 		windowWidth.setText(new Byte (TCPClient.windowWidth).toString());
+		messageField.setText(TCPClient.message);
 		Connection.toAppend.setLength(0);
 
 		mainFrame.repaint();
+	}
+	
+	public static void encryptData(String data)
+	{
+	    String encrypt = "";
+	    for (int i = 0; i < data.length(); i++)
+	    {
+	        encrypt +=(char)(data.charAt(i) + 5);
+	    }
+
+	    System.out.println(encrypt);
+	    data=encrypt;
 	}
 }
 
