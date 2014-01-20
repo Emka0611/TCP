@@ -182,6 +182,10 @@ public class TCPClient
 	public static void handleDisconnecting()
 	{
 		// Tell other chatter to disconnect as well
+		
+		GUIClient.framePaneVector.clear();
+		GUIClient.initGUI();
+
 		TCPFrame s = new TCPFrame(Connection.END_SESSION);
 		try
 		{

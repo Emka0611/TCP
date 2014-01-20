@@ -10,9 +10,6 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-//import java.util.Vector;
-
-import java.util.ArrayList;
 import java.util.Vector;
 
 import javax.swing.JButton;
@@ -103,7 +100,6 @@ public class GUIClient implements Runnable
 				}
 				
 				tab[i] = msg.substring(startIndex, endIndex);
-				System.out.println(tab[i]);
 			}
 		}
 		
@@ -270,7 +266,6 @@ public class GUIClient implements Runnable
 				{
 					framePaneVector.clear();
 					changeStatusNTS(EConnectionStatus.DISCONNECTING, true);
-					initGUI();
 				}
 			}
 		};
@@ -322,10 +317,10 @@ public class GUIClient implements Runnable
 	{
 		framePane.add(new JLabel("Numer sekwencyjny:", JLabel.CENTER));
 		framePane.add(new JLabel("Liczba pakietow:", JLabel.CENTER));
-		framePane.add(new JLabel("Flaga bezpieczenstwa:", JLabel.CENTER));	
 		framePane.add(new JLabel("Dlugosc danych:", JLabel.CENTER));	
 		framePane.add(new JLabel("Dane:", JLabel.CENTER));	
 		framePane.add(new JLabel("Suma kontrolna:", JLabel.CENTER));
+		framePane.add(new JLabel("Flaga bezpieczenstwa:", JLabel.CENTER));
 	} 
 	
 	private static void initStatusColor()
@@ -375,7 +370,6 @@ public class GUIClient implements Runnable
 
 	public static void initGUI()
 	{
-		
 		mainPane.removeAll();
 		
 		JPanel messagePane = initMessagePane();
