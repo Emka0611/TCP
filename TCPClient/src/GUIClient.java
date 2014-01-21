@@ -195,12 +195,16 @@ public class GUIClient implements Runnable
 			{
 				if (e.getActionCommand().equals("send"))
 				{
+					TCPClient.message = messageField.getText();
+					generateFrames();
+					
 					TCPFrame[] frames = new TCPFrame[framePaneVector.size()];
 					for (int i = 0; i < framePaneVector.size(); i++)
 					{
 						frames[i] = framePaneVector.get(i).getFrame();
+						sendFrame(frames[i]);
+						TCPClient.handleConnectedForWriting();
 					}
-					sendFrames(frames);
 					changeStatusNTS(EConnectionStatus.NULL, true);
 				}
 				else
@@ -212,7 +216,7 @@ public class GUIClient implements Runnable
 			}
 		};
 
-		sendButton = new JButton("Wyslij wszytkie");
+		sendButton = new JButton("Wyslij");
 		sendButton.setActionCommand("send");
 		sendButton.addActionListener(buttonListener);
 		sendButton.setEnabled(false);
@@ -313,13 +317,11 @@ public class GUIClient implements Runnable
 		tcpObj.run();
 	}
 
-	public static void sendFrames(TCPFrame[] frames)
+	public static void sendFrame(TCPFrame frame)
 	{
-		Connection.toSend = new TCPFrame[frames.length];
-		
 		synchronized (Connection.toSend)
 		{
-			Connection.toSend = frames;
+			Connection.toSend = frame;
 		}
 	}
 

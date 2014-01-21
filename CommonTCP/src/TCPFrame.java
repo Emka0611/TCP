@@ -33,6 +33,11 @@ public class TCPFrame implements Serializable
 		this.checkSum = 0;
 		this.sequrityFlag = false;
 	}
+	
+	public TCPFrame()
+	{
+		
+	}
 
 	public Byte getSeqNumber()
 	{
@@ -141,7 +146,12 @@ public class TCPFrame implements Serializable
 	
 	public void decryptData()
 	{
-		
+		String decrypt = "";
+        for (int i = 0; i < data.length(); i++)
+        {
+            decrypt += (char)(data.charAt(i)- 5);
+        }
+        data = decrypt;
 	}
 
 }

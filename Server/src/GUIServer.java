@@ -1,13 +1,13 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
@@ -23,31 +23,89 @@ public class GUIServer implements Runnable
 {
 	public final static GUIServer tcpObj = new GUIServer();
 
-	public static JFrame mainFrame = null;
-
 	public static JTextArea chatText = null;
-	public static JTextField chatLine = null;
+	
+	public static JFrame mainFrame = new JFrame(Connection.name);
 	
 	public static JPanel statusBar = null;
 	public static JLabel statusField = null;
 	public static JTextField statusColor = null;
-	
+
 	public static JTextField ipField = null;
 	public static JTextField portField = null;
-	
+	public static JLabel windowWidthLabel = null;
+	public static JTextField windowWidth = null;
+
 	public static JButton connectButton = null;
 	public static JButton disconnectButton = null;
+	public static JButton clearButton = null;
+
+	public static JPanel mainPane = new JPanel(new GridBagLayout());
+	public static JPanel buttonPane;
+
+	public static final int OPT_SIZE_X = 300;
+	public static final int OPT_SIZE_Y = 100;
+	
+	public static final int CHAT_SIZE_X = 700;
+	public static final int CHAT_SIZE_Y = 200;
 
 	public static GUIServer getTcpobj()
 	{
 		return tcpObj;
 	}
-
-	private static void addIpField(JPanel optionsPane)
+	
+	private static void initButtons()
 	{
-		JPanel pane = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+		ActionAdapter buttonListener = null;
 
-		pane.add(new JLabel("Host IP:"));
+		buttonPane = new JPanel(new GridLayout(1, 4));
+		
+		buttonListener = new ActionAdapter()
+		{
+			public void actionPerformed(ActionEvent e)
+			{
+				if (e.getActionCommand().equals("connect"))
+				{
+					if(0 == windowWidth.getText().length())
+					{
+						windowWidth.setText("10");
+					}
+					TCPServer.windowWidth = Byte.valueOf(windowWidth.getText());
+					changeStatusNTS(EConnectionStatus.BEGIN_CONNECT, true);
+				}
+				else if (e.getActionCommand().equals("disconnect"))
+				{
+					changeStatusNTS(EConnectionStatus.DISCONNECTING, true);
+				}
+				else
+				{
+					chatText.setText("");
+				}
+			}
+		};
+
+		connectButton = new JButton("Polacz");
+		connectButton.setActionCommand("connect");
+		connectButton.addActionListener(buttonListener);
+		connectButton.setEnabled(true);
+
+		disconnectButton = new JButton("Rozlacz");
+		disconnectButton.setActionCommand("disconnect");
+		disconnectButton.addActionListener(buttonListener);
+		disconnectButton.setEnabled(false);
+		
+		clearButton = new JButton("Wyczysc");
+		clearButton.setActionCommand("clear");
+		clearButton.addActionListener(buttonListener);
+		clearButton.setEnabled(false);
+
+		buttonPane.add(connectButton);
+		buttonPane.add(disconnectButton);
+		buttonPane.add(clearButton);
+	}
+	
+	private static void initIpField(JPanel optionsPane)
+	{
 		ipField = new JTextField(10);
 		ipField.setText(Connection.hostIP);
 		ipField.setEnabled(!Connection.isHost);
@@ -56,7 +114,7 @@ public class GUIServer implements Runnable
 			public void focusLost(FocusEvent e)
 			{
 				ipField.selectAll();
-				
+
 				// Should be editable only when disconnected
 				if (Connection.connectionStatus != EConnectionStatus.DISCONNECTED)
 				{
@@ -68,15 +126,10 @@ public class GUIServer implements Runnable
 				}
 			}
 		});
-
-		pane.add(ipField);
-		optionsPane.add(pane);
 	}
-
-	private static void addPortField(JPanel optionsPane)
+	
+	private static void initPortField(JPanel optionsPane)
 	{
-		JPanel pane = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-		pane.add(new JLabel("Port:"));
 		portField = new JTextField(10);
 		portField.setEditable(true);
 		portField.setText((new Integer(Connection.port)).toString());
@@ -105,56 +158,26 @@ public class GUIServer implements Runnable
 				}
 			}
 		});
-		
-		pane.add(portField);
-		optionsPane.add(pane);
-	}
-	
-	private static void addConnectDisconnectButtons(JPanel optionsPane)
-	{
-		ActionAdapter buttonListener = null;
-
-		JPanel buttonPane = new JPanel(new GridLayout(1, 2));
-		buttonListener = new ActionAdapter()
-		{
-			public void actionPerformed(ActionEvent e)
-			{
-				if (e.getActionCommand().equals("connect"))
-				{
-					changeStatusNTS(EConnectionStatus.BEGIN_CONNECT, true);
-				}
-				else
-				{
-					changeStatusNTS(EConnectionStatus.DISCONNECTING, true);
-				}
-			}
-		};
-
-		connectButton = new JButton("Connect");
-		connectButton.setActionCommand("connect");
-		connectButton.addActionListener(buttonListener);
-		connectButton.setEnabled(true);
-		
-		disconnectButton = new JButton("Disconnect");
-		disconnectButton.setMnemonic(KeyEvent.VK_D);
-		disconnectButton.setActionCommand("disconnect");
-		disconnectButton.addActionListener(buttonListener);
-		disconnectButton.setEnabled(false);
-		
-		buttonPane.add(connectButton);
-		buttonPane.add(disconnectButton);
-		
-		optionsPane.add(buttonPane);
 	}
 
 	private static JPanel initOptionsPane()
 	{
-		JPanel optionsPane = new JPanel(new GridLayout(3, 1));
+		JPanel optionsPane = new JPanel(new GridLayout(3, 2));
 
-		addIpField(optionsPane);
-		addPortField(optionsPane);
-		addConnectDisconnectButtons(optionsPane);
-		
+		initIpField(optionsPane);
+		initPortField(optionsPane);
+
+		windowWidthLabel = new JLabel("Szerkoœæ okna danych:");
+		windowWidth = new JTextField();
+
+		optionsPane.add(new JLabel("IP Serwera:"));
+		optionsPane.add(ipField);
+		optionsPane.add(new JLabel("Port:"));
+		optionsPane.add(portField);
+		optionsPane.add(windowWidthLabel);
+		optionsPane.add(windowWidth);
+
+		optionsPane.setPreferredSize(new Dimension(OPT_SIZE_X, OPT_SIZE_Y));
 		return optionsPane;
 	}
 	
@@ -167,27 +190,9 @@ public class GUIServer implements Runnable
 		chatText.setForeground(Color.blue);
 		JScrollPane chatTextPane = new JScrollPane(chatText, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-		chatLine = new JTextField();
-		chatLine.setEnabled(false);
-		chatLine.addActionListener(new ActionAdapter()
-		{
-			public void actionPerformed(ActionEvent e)
-			{
-				TCPFrame[] frame = {new TCPFrame(chatLine.getText())};
-						
-				if (!frame[1].getData().equals(""))
-				{
-					appendToChatBox("OUTGOING: " + frame[1].getData() + "\n");
-
-					sendFrames(frame);
-					chatLine.setText("");
-				}
-			}
-		});
-
-		chatPane.add(chatLine, BorderLayout.SOUTH);
+		
 		chatPane.add(chatTextPane, BorderLayout.CENTER);
-		chatPane.setPreferredSize(new Dimension(200, 200));
+		chatPane.setPreferredSize(new Dimension(CHAT_SIZE_X, CHAT_SIZE_Y));
 		
 		return chatPane;
 	}
@@ -211,23 +216,36 @@ public class GUIServer implements Runnable
 
 	public static void initGUI()
 	{
-		initStatusBar();
 		JPanel optionsPane = initOptionsPane();
 		JPanel chatPane = initChatPane();
 
-		JPanel mainPane = new JPanel(new BorderLayout());
-		mainPane.add(statusBar, BorderLayout.SOUTH);
-		mainPane.add(optionsPane, BorderLayout.WEST);
-		mainPane.add(chatPane, BorderLayout.CENTER);
+		initStatusBar();
+		initButtons();
+		GridBagConstraints c = new GridBagConstraints();
 
-		mainFrame = new JFrame(Connection.name);
-		mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		c.fill = GridBagConstraints.HORIZONTAL;
+		
+		c.gridx = 0;
+		c.gridy = 0;
+		mainPane.add(chatPane, c);
+		
+		c.gridx = 1;
+		c.gridy = 0;
+		mainPane.add(optionsPane, c);
+
+		c.gridx = 0;
+		c.gridy = 1;
+		c.ipady = 30;
+		mainPane.add(buttonPane, c);
+
+		c.gridy = 2;
+		c.ipady = 0;
+		mainPane.add(statusBar, c);
+
 		mainFrame.setContentPane(mainPane);
-		mainFrame.setSize(mainFrame.getPreferredSize());
-		mainFrame.setLocation(100, 130);
 		mainFrame.pack();
 		mainFrame.setVisible(true);
-		
+
 		mainFrame.addWindowListener(new WindowAdapter()
 		{
 			public void windowClosing(WindowEvent e)
@@ -236,6 +254,8 @@ public class GUIServer implements Runnable
 				System.exit(0);
 			}
 		});
+
+		changeStatusNTS(EConnectionStatus.NULL, true);
 	}
 
 	// The non-thread-safe way to change the GUI components while changing state
@@ -265,38 +285,40 @@ public class GUIServer implements Runnable
 		case DISCONNECTED:
 			connectButton.setEnabled(true);
 			disconnectButton.setEnabled(false);
+			clearButton.setEnabled(true);
 			ipField.setEnabled(true);
 			portField.setEnabled(true);
-			chatLine.setText("");
-			chatLine.setEnabled(false);
+			windowWidth.setEnabled(true);
 			statusColor.setBackground(Color.red);
 			break;
 
 		case DISCONNECTING:
 			connectButton.setEnabled(false);
 			disconnectButton.setEnabled(false);
+			clearButton.setEnabled(false);
 			ipField.setEnabled(false);
 			portField.setEnabled(false);
-			chatLine.setEnabled(false);
+			windowWidth.setEnabled(false);
 			statusColor.setBackground(Color.orange);
 			break;
 
 		case CONNECTED:
 			connectButton.setEnabled(false);
 			disconnectButton.setEnabled(true);
+			clearButton.setEnabled(true);
 			ipField.setEnabled(false);
 			portField.setEnabled(false);
-			chatLine.setEnabled(true);
+			windowWidth.setEnabled(false);
 			statusColor.setBackground(Color.green);
 			break;
 
 		case BEGIN_CONNECT:
 			connectButton.setEnabled(false);
 			disconnectButton.setEnabled(false);
+			clearButton.setEnabled(false);
 			ipField.setEnabled(false);
 			portField.setEnabled(false);
-			chatLine.setEnabled(false);
-			chatLine.grabFocus();
+			windowWidth.setEnabled(false);
 			statusColor.setBackground(Color.orange);
 			break;
 
@@ -308,6 +330,7 @@ public class GUIServer implements Runnable
 		portField.setText((new Integer(Connection.port)).toString());
 		statusField.setText(Connection.statusString);
 		chatText.append(Connection.toAppend.toString());
+		windowWidth.setText(TCPServer.windowWidth.toString());
 		Connection.toAppend.setLength(0);
 
 		mainFrame.repaint();
@@ -321,13 +344,11 @@ public class GUIServer implements Runnable
 		}
 	}
 
-	public static void sendFrames(TCPFrame[] frames)
+	public static void sendFrames(TCPFrame frame)
 	{
-		Connection.toSend = new TCPFrame[frames.length];
-		
 		synchronized (Connection.toSend)
 		{
-			Connection.toSend = frames;
+			Connection.toSend = frame;
 		}
 	}
 }

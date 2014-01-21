@@ -1,0 +1,7 @@
+
+public enum EServerState
+{
+	DEFAULT,
+	TRANSMISSION,
+	TRANSMISSION_STOPPED_ERROR
+}

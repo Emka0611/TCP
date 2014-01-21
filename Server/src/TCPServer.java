@@ -1,7 +1,5 @@
 import java.io.*;
-
 import javax.swing.*;
-
 import java.net.*;
 
 public class TCPServer
@@ -12,9 +10,11 @@ public class TCPServer
 	public static ObjectInputStream in = null;
 	public static ObjectOutputStream out = null;
 	
-	public static String msg = null;
+	public static Byte windowWidth = 10;
 	
-	private static Byte WINDOW_WIDTH = 10;
+	private static EServerState state = EServerState.DEFAULT;
+	private static TCPFrame receivedFrames[] = null;
+	private static int framesNumber = 0;
 
 	// The thread-safe way to change the GUI components while changing state
 	private static void changeStatusTS(EConnectionStatus newConnectStatus, boolean noError)
@@ -103,7 +103,7 @@ public class TCPServer
 	{
 		try
 		{
-			out.writeObject(WINDOW_WIDTH);
+			out.writeObject(windowWidth);
 			out.flush();
 			changeStatusTS(EConnectionStatus.CONNECTED, true);
 		}
@@ -119,11 +119,11 @@ public class TCPServer
 		try
 		{
 			// Send data
-			if (null != Connection.toSend && Connection.toSend.length != 0)
+			if (null != Connection.toSend && Connection.toSend.getData().length() != 0)
 			{
 				out.writeObject(Connection.toSend);
 				out.flush();
-				Connection.toSend = null;
+				Connection.toSend = new TCPFrame("");
 				changeStatusTS(EConnectionStatus.NULL, true);
 			}
 
@@ -137,7 +137,7 @@ public class TCPServer
 	
 	public static void handleConnectedForReading()
 	{
-		TCPFrame[] frame = null;
+		TCPFrame frame = null;
 		try
 		{
 			if(null != in)
@@ -145,7 +145,7 @@ public class TCPServer
 				// Receive data
 				try
 				{
-					frame = (TCPFrame[]) in.readObject();
+					frame = (TCPFrame) in.readObject();
 				}
 				catch (ClassNotFoundException e)
 				{
@@ -153,21 +153,44 @@ public class TCPServer
 				}
 			}
 			
-			if ((frame != null) && (frame.length != 0))
+			if ((frame != null) && (frame.getData().length() != 0))
 			{
 				// Check if it is the end of a transmission
-				if (frame[0].getData().equals(Connection.END_SESSION))
+				if (frame.getData().equals(Connection.END_SESSION))
 				{
 					changeStatusTS(EConnectionStatus.DISCONNECTING, true);
 				}
-
-				// Otherwise, receive what text
 				else
 				{
-					for(int i=0; i<frame.length; i++)
+					if(EServerState.DEFAULT == state)
 					{
-						GUIServer.appendToChatBox("INCOMING: " + frame[i].toString() + "\n");
+						state = EServerState.TRANSMISSION;
+						framesNumber = frame.getPacketsNumer();
+						receivedFrames = new TCPFrame[framesNumber];
+						System.out.println("TRANSMISSION::START::" + framesNumber);
 					}
+					
+					if(false != frame.getSequrityFlag())
+					{
+						frame.decryptData();
+					}
+					
+					if(frame.getSeqNumber() < framesNumber)
+					{
+						receivedFrames[frame.getSeqNumber()] = frame;
+						System.out.println("TRANSMISSION::ADDED FRAME");
+					}
+					
+					if(EServerState.TRANSMISSION == state && framesNumber == countReceivedFrames())
+					{
+						GUIServer.appendToChatBox("Received message: "+ getReceivedMessage() + "\n");
+						framesNumber = 0;
+						receivedFrames = null;
+						state = EServerState.DEFAULT;
+						System.out.println("TRANSMISSION::STOPPED");
+					}
+					
+					GUIServer.appendToChatBox("Received frame with id: " + frame.getSeqNumber() + " and data: " + frame.getData() + "\n");
 					changeStatusTS(EConnectionStatus.NULL, true);
 				}
 			}
@@ -178,10 +201,34 @@ public class TCPServer
 		}
 	}
 
+	private static int countReceivedFrames()
+	{
+		int count = 0;
+		for(int i=0; i<receivedFrames.length; i++)
+		{
+			if(null != receivedFrames[i])
+			{
+				count++;
+			}
+		}
+		System.out.println("TRANSMISSION::COUNT FRAMES::" + count);
+		return count;
+	}
+	
+	private static String getReceivedMessage()
+	{
+		String msg = "";
+		for(int i=0; i<receivedFrames.length; i++)
+		{
+			msg+=receivedFrames[i].getData();
+		}
+		return msg;
+	}
+
 	public static void handleDisconnecting()
 	{
 		// Tell other chatter to disconnect as well
-		TCPFrame[] s = {new TCPFrame(Connection.END_SESSION)};
+		TCPFrame s = new TCPFrame(Connection.END_SESSION);
 		try
 		{
 			if(null != out)
@@ -191,7 +238,9 @@ public class TCPServer
 				changeStatusTS(EConnectionStatus.DISCONNECTED, true);
 			}
 			else
+			{
 				changeStatusTS(EConnectionStatus.DISCONNECTED, false);
+			}
 		}
 		catch (IOException e)
 		{
@@ -216,6 +265,7 @@ public class TCPServer
 		Connection.name = "Simple TCP Server";
 		WatekNasluchujacy w1 = new WatekNasluchujacy();
 		
+		GUIServer.mainFrame.setLocation(100, 130);
 		GUIServer.initGUI();
 		(new Thread(w1)).start();
 
