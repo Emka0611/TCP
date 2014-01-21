@@ -1,17 +1,21 @@
 import java.awt.Checkbox;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Vector;
 
+import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 public class FramePane
 {
-	private JPanel pane = new JPanel(new GridLayout(1, Connection.FIELDS_NUMBER));
+	private JPanel pane = new JPanel(new GridLayout(1, Connection.FIELDS_NUMBER + 1));
 	
 	public Vector<JTextField> frameFields = new Vector<JTextField>();
 	public Checkbox sequrityFlagCheckbox = new Checkbox();
+	public JButton sendFramebutton = null;
 	
 	public static final int PANE_SIZE_X = 900;
 	public static final int PANE_SIZE_Y = 40;
@@ -19,17 +23,41 @@ public class FramePane
 	
 	public FramePane(TCPFrame frame)
 	{		
+		initButton();
+		
 		for(int i=0; i<Connection.FIELDS_NUMBER-1; i++)
 		{
 			frameFields.add(new JTextField());
 			pane.add(frameFields.get(i));
 		}
-		pane.add(sequrityFlagCheckbox);
-		pane.setPreferredSize(new Dimension(PANE_SIZE_X, PANE_SIZE_Y));
 		
 		fillFields(frame);
+		
+		pane.add(sequrityFlagCheckbox);
+		pane.add(sendFramebutton);
+		pane.setPreferredSize(new Dimension(PANE_SIZE_X, PANE_SIZE_Y));
 	}
 	
+	private void initButton()
+	{
+		ActionListener buttonListener = new ActionAdapter()
+		{
+			public void actionPerformed(ActionEvent e)
+			{
+				if (e.getActionCommand().equals("sendFrame"))
+				{
+					GUIClient.sendFrames(getFrame());
+					TCPClient.handleConnectedForWriting();
+					GUIClient.changeStatusNTS(EConnectionStatus.NULL, true);
+				}
+			}
+		};
+		
+		sendFramebutton = new JButton("Wyslij ramke");
+		sendFramebutton.setActionCommand("sendFrame");
+		sendFramebutton.addActionListener(buttonListener);
+	}
+
 	private void fillFields(TCPFrame frame)
 	{
 		frameFields.get(EFieldIndex.PACKET_NUMBER.ordinal()).setText(frame.getPacketsNumer().toString());		
@@ -52,6 +80,7 @@ public class FramePane
 			}
 			
 			sequrityFlagCheckbox.setEnabled(enabled);
+			sendFramebutton.setEnabled(enabled);
 		}
 	}
 	

@@ -1,7 +1,8 @@
 import java.io.*;
-import javax.swing.*;
-import java.net.*;
 
+import javax.swing.*;
+
+import java.net.*;
 public class TCPServer
 {
 	// TCP Components
@@ -13,11 +14,26 @@ public class TCPServer
 	public static Byte windowWidth = 10;
 	
 	private static EServerState state = EServerState.DEFAULT;
+	
+	public static void setState(EServerState state)
+	{
+		synchronized (state)
+		{
+			TCPServer.state = state;
+		}
+	}
+
+	public static EServerState getState()
+	{
+		return state;
+	}
+
 	private static TCPFrame receivedFrames[] = null;
 	private static int framesNumber = 0;
-
+	
+	private static ReminderTask timer = new ReminderTask();
 	// The thread-safe way to change the GUI components while changing state
-	private static void changeStatusTS(EConnectionStatus newConnectStatus, boolean noError)
+	public static void changeStatusTS(EConnectionStatus newConnectStatus, boolean noError)
 	{
 		if (newConnectStatus != EConnectionStatus.NULL)
 		{
@@ -137,6 +153,11 @@ public class TCPServer
 	
 	public static void handleConnectedForReading()
 	{
+		if(state ==  EServerState.TRANSMISSION_STOPPED_ERROR)
+		{
+			timoutTransmission();
+		}
+		
 		TCPFrame frame = null;
 		try
 		{
@@ -162,35 +183,43 @@ public class TCPServer
 				}
 				else
 				{
-					if(EServerState.DEFAULT == state)
-					{
-						state = EServerState.TRANSMISSION;
-						framesNumber = frame.getPacketsNumer();
-						receivedFrames = new TCPFrame[framesNumber];
-						System.out.println("TRANSMISSION::START::" + framesNumber);
-					}
-					
 					if(false != frame.getSequrityFlag())
 					{
 						frame.decryptData();
 					}
 					
-					if(frame.getSeqNumber() < framesNumber)
-					{
-						receivedFrames[frame.getSeqNumber()] = frame;
-						System.out.println("TRANSMISSION::ADDED FRAME");
-					}
-					
-					if(EServerState.TRANSMISSION == state && framesNumber == countReceivedFrames())
-					{
-						GUIServer.appendToChatBox("Received message: "+ getReceivedMessage() + "\n");
-						framesNumber = 0;
-						receivedFrames = null;
-						state = EServerState.DEFAULT;
-						System.out.println("TRANSMISSION::STOPPED");
-					}
-					
 					GUIServer.appendToChatBox("Received frame with id: " + frame.getSeqNumber() + " and data: " + frame.getData() + "\n");
+
+					switch (state)
+					{
+					case DEFAULT:
+						state = EServerState.TRANSMISSION;
+						framesNumber = frame.getPacketsNumer();
+						receivedFrames = new TCPFrame[framesNumber];
+						timer.start(5);
+						System.out.println("TRANSMISSION::START::" + framesNumber);
+						
+					case TRANSMISSION:
+						if(frame.getSeqNumber() < framesNumber)
+						{
+							receivedFrames[frame.getSeqNumber()] = frame;
+							System.out.println("TRANSMISSION::ADDED FRAME");
+						}
+						
+						if(framesNumber == countReceivedFrames())
+						{
+							GUIServer.appendToChatBox("Received message: "+ getReceivedMessage() + "\n");
+							framesNumber = 0;
+							receivedFrames = null;
+							state = EServerState.DEFAULT;
+							timer.stop();
+							System.out.println("TRANSMISSION::STOPPED");
+						}
+						break;
+					default:
+						break;
+					}
+					
 					changeStatusTS(EConnectionStatus.NULL, true);
 				}
 			}
@@ -292,5 +321,15 @@ public class TCPServer
 				break;
 			}
 		}
+	}
+
+	public static void timoutTransmission()
+	{
+		framesNumber = 0;
+		receivedFrames = null;
+		setState(EServerState.DEFAULT);
+		GUIServer.appendToChatBox("TIMEOUT!!\n");
+		System.out.println("TRANSMISSION::STOPPED");
+		changeStatusTS(EConnectionStatus.NULL, true);
 	}
 }

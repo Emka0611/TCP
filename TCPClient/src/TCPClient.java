@@ -165,18 +165,25 @@ public class TCPClient
 		try
 		{
 			// Send data
-			if (null != Connection.toSend && Connection.toSend.getData().length() != 0)
+			if(Connection.framesToSend != null)
 			{
-				if(false != Connection.toSend.getSequrityFlag())
+				for(int i =0; i<Connection.framesToSend.length; i++)
 				{
-					Connection.toSend.encryptData();
-				}
+					if (Connection.framesToSend[i].getData().length() != 0)
+					{
+						if(false != Connection.framesToSend[i].getSequrityFlag())
+						{
+							Connection.framesToSend[i].encryptData();
+						}
 
-				out.writeObject(Connection.toSend);
-				out.flush();
-				Connection.toSend = new TCPFrame("");
+						out.writeObject(Connection.framesToSend[i]);
+						out.flush();
+					}
+				}
+				Connection.framesToSend = null;
 				changeStatusTS(EConnectionStatus.NULL, true);
 			}
+
 		}
 		catch (IOException e)
 		{

@@ -33,11 +33,6 @@ public class TCPFrame implements Serializable
 		this.checkSum = 0;
 		this.sequrityFlag = false;
 	}
-	
-	public TCPFrame()
-	{
-		
-	}
 
 	public Byte getSeqNumber()
 	{

@@ -195,16 +195,18 @@ public class GUIClient implements Runnable
 			{
 				if (e.getActionCommand().equals("send"))
 				{
-					TCPClient.message = messageField.getText();
-					generateFrames();
+					if(TCPClient.message != messageField.getText())
+					{
+						TCPClient.message = messageField.getText();
+						generateFrames();
+					}
 					
 					TCPFrame[] frames = new TCPFrame[framePaneVector.size()];
 					for (int i = 0; i < framePaneVector.size(); i++)
 					{
 						frames[i] = framePaneVector.get(i).getFrame();
-						sendFrame(frames[i]);
-						TCPClient.handleConnectedForWriting();
 					}
+					sendFrames(frames);
 					changeStatusNTS(EConnectionStatus.NULL, true);
 				}
 				else
@@ -263,7 +265,7 @@ public class GUIClient implements Runnable
 
 	private static JPanel initFramePaneLabel()
 	{
-		JPanel framePane = new JPanel(new GridLayout(1, Connection.FIELDS_NUMBER));
+		JPanel framePane = new JPanel(new GridLayout(1, Connection.FIELDS_NUMBER + 1));
 		framePane.setPreferredSize(new Dimension(PANE_SIZE_X, PANE_SIZE_Y));
 		addComponentsToFramePaneLabel(framePane);
 
@@ -278,6 +280,7 @@ public class GUIClient implements Runnable
 		framePane.add(new JLabel("Dane:", JLabel.CENTER));
 		framePane.add(new JLabel("Suma kontrolna:", JLabel.CENTER));
 		framePane.add(new JLabel("Flaga bezpieczenstwa:", JLabel.CENTER));
+		framePane.add(new JLabel("", JLabel.CENTER));
 	}
 
 	private static void initStatusColor()
@@ -317,11 +320,21 @@ public class GUIClient implements Runnable
 		tcpObj.run();
 	}
 
-	public static void sendFrame(TCPFrame frame)
+	public static void sendFrames(TCPFrame[] frames)
 	{
+		Connection.framesToSend = new TCPFrame[frames.length];
 		synchronized (Connection.toSend)
 		{
-			Connection.toSend = frame;
+			Connection.framesToSend = frames;
+		}
+	}
+	
+	public static void sendFrames(TCPFrame frame)
+	{
+		Connection.framesToSend = new TCPFrame[1];
+		synchronized (Connection.toSend)
+		{
+			Connection.framesToSend[0] = frame;
 		}
 	}
 
