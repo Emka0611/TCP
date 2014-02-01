@@ -106,14 +106,14 @@ public class TCPFrame implements Serializable
 		return s;
 	}
 
-	public void calculateChecksum()
+	public byte calculateChecksum()
 	{
 		CRC32 crc = new CRC32();
 		crc.update(data.getBytes());
-		checkSum = (byte) crc.getValue();
+		return (byte)crc.getValue();
 	}
 	
-	public void crc16()
+	public byte crc16()
 	{
 		int crc = 0xFFFF;
 
@@ -126,7 +126,7 @@ public class TCPFrame implements Serializable
 			crc ^= ((crc & 0xFF) << 5) & 0xffff;
 		}
 		crc &= 0xffff;
-		checkSum = (byte)crc;
+		return (byte)crc;
 	}
 	
 	public void encryptData()
@@ -147,6 +147,18 @@ public class TCPFrame implements Serializable
             decrypt += (char)(data.charAt(i)- 5);
         }
         data = decrypt;
+	}
+	
+	public boolean validate()
+	{
+		boolean res = false;
+		
+		if(seqNumber < packetsNumer && dataLength == data.length() && checkSum == calculateChecksum())
+		{
+			res=true;
+		}
+		
+		return res;
 	}
 
 }

@@ -200,15 +200,22 @@ public class TCPServer
 						System.out.println("TRANSMISSION::START::" + framesNumber);
 						
 					case TRANSMISSION:
-						if(frame.getSeqNumber() < framesNumber)
+						boolean isOk = false;
+						
+						if(false != frame.validate() && frame.getSeqNumber() < framesNumber)
 						{
 							receivedFrames[frame.getSeqNumber()] = frame;
 							System.out.println("TRANSMISSION::ADDED FRAME");
+							isOk = true;
 						}
 						
-						if(framesNumber == countReceivedFrames())
+						if(framesNumber == countReceivedFrames() || false == isOk)
 						{
-							GUIServer.appendToChatBox("Received message: "+ getReceivedMessage() + "\n");
+							if(false!= isOk)
+								GUIServer.appendToChatBox("Received message: "+ getReceivedMessage() + "\n");
+							else
+								GUIServer.appendToChatBox("WRONG FRAME\n");
+							
 							framesNumber = 0;
 							receivedFrames = null;
 							state = EServerState.DEFAULT;

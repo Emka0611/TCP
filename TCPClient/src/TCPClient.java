@@ -45,8 +45,7 @@ public class TCPClient
 				tab[i].setPacketsNumer((byte)frames);
 				tab[i].setSeqNumber((byte) i);
 				tab[i].setDataLength((byte)message.substring(startIndex, endIndex).length());
-				tab[i].calculateChecksum();
-				tab[i].crc16();
+				tab[i].setCheckSum(tab[i].calculateChecksum());
 				tab[i].setSequrityFlag(true);
 			}
 		}

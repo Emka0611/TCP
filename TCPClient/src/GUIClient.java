@@ -211,7 +211,7 @@ public class GUIClient implements Runnable
 				}
 				else
 				{
-					TCPClient.message = "";
+					TCPClient.message ="";
 					framePaneVector.clear();
 					updateGUI();
 				}
