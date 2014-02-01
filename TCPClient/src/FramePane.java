@@ -60,13 +60,13 @@ public class FramePane
 
 	private void fillFields(TCPFrame frame)
 	{
-		frameFields.get(EFieldIndex.PACKET_NUMBER.ordinal()).setText(frame.getPacketsNumer().toString());		
-		frameFields.get(EFieldIndex.SEQ_NUMBER.ordinal()).setText(frame.getSeqNumber().toString());
-		frameFields.get(EFieldIndex.DATA_LENGTH.ordinal()).setText(frame.getDataLength().toString());		
-		frameFields.get(EFieldIndex.DATA.ordinal()).setText(frame.getData().toString());
-		frameFields.get(EFieldIndex.CHECK_SUM.ordinal()).setText(frame.getCheckSum().toString());
+		frameFields.get(EFieldIndex.PACKET_NUMBER.ordinal()).setText(frame.getPacketsNumer());		
+		frameFields.get(EFieldIndex.SEQ_NUMBER.ordinal()).setText(frame.getSeqNumber());
+		frameFields.get(EFieldIndex.DATA_LENGTH.ordinal()).setText(frame.getDataLength());		
+		frameFields.get(EFieldIndex.DATA.ordinal()).setText(frame.getData());
+		frameFields.get(EFieldIndex.CHECK_SUM.ordinal()).setText(frame.getCheckSum());
 		
-		sequrityFlagCheckbox.setState(frame.getSequrityFlag());
+		sequrityFlagCheckbox.setState(Boolean.parseBoolean(frame.getSequrityFlag()));
 		
 	}
 
@@ -95,12 +95,12 @@ public class FramePane
 
 	public TCPFrame getFrame() 
 	{
-		Byte seqNumber = Byte.valueOf(frameFields.get(EFieldIndex.SEQ_NUMBER.ordinal()).getText());
-		Byte packetsNumber = Byte.valueOf(frameFields.get(EFieldIndex.PACKET_NUMBER.ordinal()).getText());
-		Byte dataLength = Byte.valueOf(frameFields.get(EFieldIndex.DATA_LENGTH.ordinal()).getText());
+		String seqNumber = frameFields.get(EFieldIndex.SEQ_NUMBER.ordinal()).getText();
+		String packetsNumber = frameFields.get(EFieldIndex.PACKET_NUMBER.ordinal()).getText();
+		String dataLength = frameFields.get(EFieldIndex.DATA_LENGTH.ordinal()).getText();
 		String data = frameFields.get(EFieldIndex.DATA.ordinal()).getText();
-		Byte checkSum = Byte.valueOf(frameFields.get(EFieldIndex.CHECK_SUM.ordinal()).getText());
-		Boolean sequrityFlag = this.sequrityFlagCheckbox.getState();
+		String checkSum = frameFields.get(EFieldIndex.CHECK_SUM.ordinal()).getText();
+		String sequrityFlag = Boolean.toString(this.sequrityFlagCheckbox.getState());
 		
 		TCPFrame frame = new TCPFrame(seqNumber, packetsNumber, dataLength, data, checkSum, sequrityFlag);
 		return frame;

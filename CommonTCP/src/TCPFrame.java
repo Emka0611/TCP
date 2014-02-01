@@ -5,15 +5,15 @@ public class TCPFrame implements Serializable
 {
 	private static final long serialVersionUID = 1L;
 
-	private Byte seqNumber = null;
-	private Byte packetsNumer = null;
-	private Byte dataLength = null;
+	private String seqNumber = null;
+	private String packetsNumer = null;
+	private String dataLength = null;
 	private String data = null;
-	private Byte checkSum = null;
-	private Boolean sequrityFlag = null;
-	
-	public TCPFrame(Byte seqNumber, Byte packetsNumer, Byte dataLength,
-			String data, Byte checkSum, Boolean sequrityFlag)
+	private String checkSum = null;
+	private String sequrityFlag = null;
+
+	public TCPFrame(String seqNumber, String packetsNumer, String dataLength, String data, String checkSum,
+			String sequrityFlag)
 	{
 		this.seqNumber = seqNumber;
 		this.packetsNumer = packetsNumer;
@@ -22,44 +22,44 @@ public class TCPFrame implements Serializable
 		this.checkSum = checkSum;
 		this.sequrityFlag = sequrityFlag;
 	}
-	
+
 	public TCPFrame(String data)
 	{
 		this.data = data;
-		
-		this.seqNumber = 0;
-		this.packetsNumer = 0;
-		this.dataLength = 0;
-		this.checkSum = 0;
-		this.sequrityFlag = false;
+
+		this.seqNumber = "0";
+		this.packetsNumer = "0";
+		this.dataLength = "0";
+		this.checkSum = "0";
+		this.sequrityFlag = "false";
 	}
 
-	public Byte getSeqNumber()
+	public String getSeqNumber()
 	{
 		return seqNumber;
 	}
 
-	public void setSeqNumber(Byte seqNumber)
+	public void setSeqNumber(String seqNumber)
 	{
 		this.seqNumber = seqNumber;
 	}
 
-	public Byte getPacketsNumer()
+	public String getPacketsNumer()
 	{
 		return packetsNumer;
 	}
 
-	public void setPacketsNumer(Byte packetsNumer)
+	public void setPacketsNumer(String packetsNumer)
 	{
 		this.packetsNumer = packetsNumer;
 	}
 
-	public Byte getDataLength()
+	public String getDataLength()
 	{
 		return dataLength;
 	}
 
-	public void setDataLength(Byte dataLength)
+	public void setDataLength(String dataLength)
 	{
 		this.dataLength = dataLength;
 	}
@@ -74,22 +74,22 @@ public class TCPFrame implements Serializable
 		this.data = data;
 	}
 
-	public Byte getCheckSum()
+	public String getCheckSum()
 	{
 		return checkSum;
 	}
 
-	public void setCheckSum(Byte checkSum)
+	public void setCheckSum(String checkSum)
 	{
 		this.checkSum = checkSum;
 	}
-	
-	public Boolean getSequrityFlag()
+
+	public String getSequrityFlag()
 	{
 		return sequrityFlag;
 	}
 
-	public void setSequrityFlag(Boolean sequrityFlag)
+	public void setSequrityFlag(String sequrityFlag)
 	{
 		this.sequrityFlag = sequrityFlag;
 	}
@@ -106,58 +106,59 @@ public class TCPFrame implements Serializable
 		return s;
 	}
 
-	public byte calculateChecksum()
-	{
-		CRC32 crc = new CRC32();
-		crc.update(data.getBytes());
-		return (byte)crc.getValue();
-	}
-	
-	public byte crc16()
+	public long calculateChecksum()
 	{
 		int crc = 0xFFFF;
 
 		for (int j = 0; j < data.getBytes().length; j++)
 		{
 			crc = ((crc >>> 8) | (crc << 8)) & 0xffff;
-			crc ^= (data.getBytes()[j] & 0xff);// byte to int, trunc sign
+			crc ^= (data.getBytes()[j] & 0xff);// String to int, trunc sign
 			crc ^= ((crc & 0xff) >> 4);
 			crc ^= (crc << 12) & 0xffff;
 			crc ^= ((crc & 0xFF) << 5) & 0xffff;
 		}
 		crc &= 0xffff;
-		return (byte)crc;
+		return crc;
 	}
+
+	/*
+	 * public int crc16() {
+	 * 
+	 * return crc; CRC32 crc = new CRC32(); crc.update(data.getBytes()); return
+	 * crc.getValue(); }
+	 */
 	
 	public void encryptData()
 	{
-	    String encrypt = "";
-	    for (int i = 0; i < data.length(); i++)
-	    {
-	        encrypt +=(char)(data.charAt(i) + 5);
-	    }
-	    data=encrypt;
+		String encrypt = "";
+		for (int i = 0; i < data.length(); i++)
+		{
+			encrypt += (char) (data.charAt(i) + 5);
+		}
+		data = encrypt;
 	}
-	
+
 	public void decryptData()
 	{
 		String decrypt = "";
-        for (int i = 0; i < data.length(); i++)
-        {
-            decrypt += (char)(data.charAt(i)- 5);
-        }
-        data = decrypt;
+		for (int i = 0; i < data.length(); i++)
+		{
+			decrypt += (char) (data.charAt(i) - 5);
+		}
+		data = decrypt;
 	}
-	
+
 	public boolean validate()
 	{
 		boolean res = false;
-		
-		if(seqNumber < packetsNumer && dataLength == data.length() && checkSum == calculateChecksum())
+
+		if (Integer.parseInt(seqNumber) < Integer.parseInt(packetsNumer)
+				&& Integer.parseInt(dataLength) == data.length() && Long.parseLong(checkSum) == calculateChecksum())
 		{
-			res=true;
+			res = true;
 		}
-		
+
 		return res;
 	}
 

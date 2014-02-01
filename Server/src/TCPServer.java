@@ -183,7 +183,7 @@ public class TCPServer
 				}
 				else
 				{
-					if(false != frame.getSequrityFlag())
+					if(false != Boolean.parseBoolean(frame.getSequrityFlag()))
 					{
 						frame.decryptData();
 					}
@@ -194,7 +194,7 @@ public class TCPServer
 					{
 					case DEFAULT:
 						state = EServerState.TRANSMISSION;
-						framesNumber = frame.getPacketsNumer();
+						framesNumber = Integer.parseInt(frame.getPacketsNumer());
 						receivedFrames = new TCPFrame[framesNumber];
 						timer.start(5);
 						System.out.println("TRANSMISSION::START::" + framesNumber);
@@ -202,9 +202,9 @@ public class TCPServer
 					case TRANSMISSION:
 						boolean isOk = false;
 						
-						if(false != frame.validate() && frame.getSeqNumber() < framesNumber)
+						if(false != frame.validate() && Integer.parseInt(frame.getSeqNumber()) < framesNumber)
 						{
-							receivedFrames[frame.getSeqNumber()] = frame;
+							receivedFrames[Integer.parseInt(frame.getSeqNumber())] = frame;
 							System.out.println("TRANSMISSION::ADDED FRAME");
 							isOk = true;
 						}

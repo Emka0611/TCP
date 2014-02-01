@@ -42,11 +42,11 @@ public class TCPClient
 				}
 				
 				tab[i] = new TCPFrame(message.substring(startIndex, endIndex));
-				tab[i].setPacketsNumer((byte)frames);
-				tab[i].setSeqNumber((byte) i);
-				tab[i].setDataLength((byte)message.substring(startIndex, endIndex).length());
-				tab[i].setCheckSum(tab[i].calculateChecksum());
-				tab[i].setSequrityFlag(true);
+				tab[i].setPacketsNumer(Integer.toString(frames));
+				tab[i].setSeqNumber(Integer.toString(i));
+				tab[i].setDataLength(Integer.toString(message.substring(startIndex, endIndex).length()));
+				tab[i].setCheckSum(Long.toString(tab[i].calculateChecksum()));
+				tab[i].setSequrityFlag("true");
 			}
 		}
 		
@@ -170,7 +170,7 @@ public class TCPClient
 				{
 					if (Connection.framesToSend[i].getData().length() != 0)
 					{
-						if(false != Connection.framesToSend[i].getSequrityFlag())
+						if(false != Boolean.parseBoolean(Connection.framesToSend[i].getSequrityFlag()))
 						{
 							Connection.framesToSend[i].encryptData();
 						}
